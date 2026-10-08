@@ -4,6 +4,12 @@
 <style>
 @media print { .no-print { display:none; } body { background:#fff; } }
 .invoice { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:2rem; max-width:750px; margin:0 auto; }
+.invoice .small{overflow-wrap:anywhere}
+@media (max-width:576px){
+  .invoice{padding:1.1rem}
+  .invoice .row>.col-6{flex:0 0 100%; max-width:100%}
+  .invoice .text-end{text-align:start!important}
+}
 .inv-head { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--talabat); padding-bottom:1rem; margin-bottom:1rem; }
 </style>
 {% endblock %}
@@ -28,6 +34,7 @@
             <div class="small">{{ technician.email if technician else '' }}</div>
         </div>
     </div>
+    <div class="table-responsive">
     <table class="table">
         <thead><tr><th>الخدمة</th><th>السعر</th><th>الخصم</th><th>الإجمالي</th></tr></thead>
         <tbody>
@@ -39,6 +46,7 @@
             </tr>
         </tbody>
     </table>
+    </div>
     <div class="d-flex justify-content-between align-items-center mt-3 p-3" style="background:#fdeef1; border-radius:12px; border:1px solid #e8b3c0;">
         <span>طريقة الدفع: <strong>{{ order.payment_method }}</strong> — {{ order.payment_status }}</span>
         <span>الحالة: <strong>{{ order.status }}</strong></span>

@@ -735,3 +735,38 @@ html.js .rv-js.in{opacity:1; transform:none}
 .tb-section-h h5{color:#fff; font-weight:900; margin:0}
 .tb-section-h a{color:var(--talabat); font-weight:800; font-size:.86rem}
 
+/* ============================================================
+   ملاءمة الموبايل: منع أي عنصر يتقصّ بره الشاشة
+   ============================================================ */
+html{overflow-x:clip}
+@supports not (overflow:clip){html{overflow-x:hidden}}
+img{max-width:100%}
+.min-width-0{min-width:0!important}
+@media (max-width:767.98px){
+  /* أي جدول يتحوّل لسكرول داخلي بدل ما يوسّع الصفحة */
+  main table{display:block; width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch}
+  /* حقول بخط 16px: تمنع زوم الآيفون التلقائي اللي بيكبّر الصفحة ويقصّها */
+  input,select,textarea{font-size:16px!important}
+  .otp-box{font-size:1.5rem!important}
+  /* صناديق OTP مرنة بدل العرض الثابت (6×48px كان بيعدّي الشاشات الصغيرة) */
+  .otp-boxes{gap:8px}
+  .otp-box{flex:1 1 0; width:auto; min-width:0; max-width:52px}
+  /* نصوص طويلة (عناوين/أسعار/أسماء) تتكسر بدل ما تدفع المحتوى بره */
+  .tb-address>div{min-width:0}
+  .tb-address .val,.tb-name,.tb-desc,.ord-title{overflow-wrap:anywhere}
+  .ord-main{min-width:0}
+  .eta-banner{flex-wrap:wrap; gap:.6rem}
+  .eta-banner .eta-num{font-size:1.7rem}
+  .co-body{padding:1rem}
+  .panel-body{padding:1rem}
+  .invoice{padding:1.1rem}
+  .pay-row{grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr))}
+}
+@media (max-width:380px){
+  .tb-item{flex-wrap:wrap}
+  .tb-item .tb-qty{margin-inline-start:auto}
+  .otp-boxes{gap:6px}
+  .hero{padding:1.8rem 1rem}
+  .co-body{padding:.9rem}
+}
+
