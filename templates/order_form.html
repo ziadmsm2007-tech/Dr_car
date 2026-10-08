@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ t('btn_book') }} - AutoCare{% endblock %}
+{% block extra_css %}
+{% from "_location_picker.html" import lp_css with context %}
+{{ lp_css() }}
+{% endblock %}
+{% block content %}
+{% from "_dropdown.html" import dropdown %}
+{% from "_location_picker.html" import picker with context %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div style="background:linear-gradient(135deg, rgba(255,255,255,.09), rgba(255,255,255,.04)); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.12); border-radius:22px; overflow:hidden; box-shadow:0 16px 40px rgba(0,0,0,.35)">
+      <div style="background:linear-gradient(135deg,#800020,#a11d33); color:#fff; padding:1.6rem 1.8rem; text-align:center">
+        <div style="width:72px;height:72px;background:rgba(255,255,255,.18); border-radius:16px; display:grid; place-items:center; margin:0 auto 10px; font-size:2.4rem; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.22)">{{ visual.emoji if visual else "🔧" }}</div>
+        <h4 class="mb-1" style="font-weight:900">{{ service.name }}</h4>
+        <div style="opacity:.9; font-size:.9rem">{{ t('hero_subtitle') }}</div>
+      </div>
+      <form method="POST" id="orderForm" style="padding:1.6rem 1.8rem; background:transparent">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold" style="color:#fff">👤 {{ t('order_full_name') }}</label>
+            <input type="text" name="name" class="form-control form-control-lg" value="{{ current_user.name }}" required style="background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); color:#fff">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold" style="color:#fff">📞 {{ t('order_phone') }}</label>
+            <input type="tel" name="phone" class="form-control form-control-lg" placeholder="01xxxxxxxxx" value="{{ saved_phone }}" dir="ltr" required style="background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); color:#fff">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold" style="color:#fff">📍 {{ t('order_address_lbl') }}</label>
+          {{ picker(name='location', value=(address or city or ''), lat=saved_lat, lng=saved_lng, region='hidden') }}
+          <input type="hidden" name="scheduled_at" value="">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold" style="color:#fff">🚗 {{ t('car_section') }}</label>
+          <div class="row g-2">
+            <div class="col-6">
+              {{ dropdown('car_make', 'carMake', t('car_make_pick'), car_makes_list) }}
+            </div>
+            <div class="col-6">
+              {{ dropdown('car_model', 'carModel', t('car_model_pick'), [], is_empty=True) }}
+            </div>
+          </div>
+          <input type="hidden" name="car_year" value="2020">
+        </div>
+
+        <div id="pricePreview" style="display:none; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px; text-align:center; margin-bottom:16px; backdrop-filter:blur(8px)">
+          <div id="priceBox" style="background:linear-gradient(90deg,#800020,#a11d33); border:none; border-radius:999px; display:inline-block; padding:8px 18px; font-weight:900; color:#fff; font-size:1.15rem">—</div>
+        </div>
+
+        <button type="submit" class="btn w-100" style="background:linear-gradient(90deg,#800020,#a11d33); color:#fff; font-weight:900; padding:14px; border-radius:14px; border:none; font-size:1.05rem; box-shadow:0 8px 22px rgba(128,0,32,.35)">{{ t('btn_confirm') }} ✨</button>
+        <p class="text-center small text-muted mt-2 mb-0">{{ t('payment_unpaid') }} • {{ t('track_on_way') }}</p>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% from "_location_picker.html" import lp_js with context %}
+{{ lp_js() }}
+<script>
+(function(){
+  var CAR_DATA={{ car_makes|tojson }};
+  var SERVICE_ID={{ service.id }};
+  var ddMake = document.querySelector('[data-dd="carMake"]');
+  var ddModel = document.querySelector('[data-dd="carModel"]');
+  var preview=document.getElementById('pricePreview'),priceBox=document.getElementById('priceBox');
+  var carModelPick="{{ t('car_model_pick') }}";
+  var currency="{{ t('currency') }}";
+  var form=document.getElementById('orderForm');
+
+  if(window.DD){ window.DD.init(); }
+
+  // السعر بيتحسب من السيرفر (نفس معادلة تأكيد الطلب بالظبط) وبيظهر بس بعد اختيار العربية
+  var reqId=0;
+  function updatePrice(){
+    var make  = ddMake  ? window.DD.get(ddMake)  : '';
+    var model = ddModel ? window.DD.get(ddModel) : '';
+    if(!make||!model){preview.style.display='none';return;}
+    var my=++reqId;
+    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      service_id:SERVICE_ID, car_make:make, car_model:model,
+      location:form.elements['location'].value,
+      governorate:(form.elements['governorate']||{}).value||'',
+      city:(form.elements['city']||{}).value||''
+    })}).then(function(r){return r.json();}).then(function(d){
+      if(my!==reqId) return;
+      if(d&&d.ok&&d.lines.length){ priceBox.textContent=d.total+' '+currency; preview.style.display='block'; }
+      else preview.style.display='none';
+    }).catch(function(){ preview.style.display='none'; });
+  }
+  var updateSoon=(function(){var t;return function(){clearTimeout(t);t=setTimeout(updatePrice,350);};})();
+
+  if(ddMake){
+    ddMake.addEventListener('dd:change',function(e){
+      var make=e.detail.value;
+      if(window.DD && ddModel){
+        window.DD.setOptions(ddModel, CAR_DATA[make]||[], carModelPick);
+        window.DD.setValue(ddModel,'');
+      }
+      preview.style.display='none';
+    });
+  }
+  if(ddModel){ ddModel.addEventListener('dd:change',updatePrice); }
+  document.addEventListener('lp:change',updateSoon);
+  form.elements['location'].addEventListener('input',updateSoon);
+
+  form.addEventListener('submit',function(e){
+    var ok=true;
+    if(ddMake&&ddModel){
+      if(!window.DD.get(ddMake)){ window.DD.open(ddMake); ok=false; }
+      else if(!window.DD.get(ddModel)){ window.DD.open(ddModel); ok=false; }
+    }
+    if(!ok){ e.preventDefault(); return; }
+  });
+})();
+</script>
+{% endblock %}

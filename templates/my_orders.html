@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_my_orders') }} - Dr. Car{% endblock %}
+{% block extra_css %}
+<style>
+.ord-list{display:flex; flex-direction:column; gap:.8rem}
+.ord-card{
+    display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+    padding:1rem 1.1rem; border-radius:18px;
+    background:linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.12); border-inline-start:4px solid var(--burgundy);
+    box-shadow:0 8px 24px rgba(0,0,0,.25); transition:.2s;
+}
+.ord-card:hover{border-color:rgba(226,169,182,.35); transform:translateY(-2px)}
+.ord-main{flex:1 1 260px; min-width:200px}
+.ord-title{font-weight:900; color:#fff; font-size:1.04rem; line-height:1.3}
+.ord-sub{display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem}
+.chip-mini{
+    display:inline-flex; align-items:center; gap:.25rem;
+    background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14);
+    color:rgba(255,255,255,.86); border-radius:99px; padding:.2rem .62rem;
+    font-size:.75rem; font-weight:700;
+}
+.chip-mini.price{background:rgba(128,0,32,.25); border-color:rgba(226,169,182,.3); color:var(--burgundy-soft)}
+.ord-status{display:flex; gap:.4rem; flex-wrap:wrap; align-items:center}
+.ord-actions{display:flex; gap:.5rem; flex-wrap:wrap; margin-inline-start:auto}
+@media (max-width:576px){
+    .ord-card{flex-direction:column; align-items:stretch}
+    .ord-actions{margin-inline-start:0}
+    .ord-actions .btn{flex:1 1 auto}
+}
+.empty-card{
+    background:linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:20px; padding:1.8rem 1.6rem; text-align:center;
+}
+.empty-card .big{font-size:3.4rem; display:block; margin-bottom:.6rem}
+.empty-card h5{font-size:1.15rem; color:#fff; margin-bottom:.3rem}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-head fade-up">
+    <h3>📦 {{ t('nav_my_orders') }}</h3>
+    <p>{{ orders | length }} {{ t('orders_count') }}</p>
+</div>
+
+<div class="panel">
+    <div class="panel-body">
+        {% if orders %}
+        <div class="ord-list">
+            {% for order in orders %}
+            {% set st_key = 'status_' ~ order.status|lower|replace(' ', '_') %}
+            {% set is_awaiting = order.status == 'Awaiting Payment' %}
+            {% set is_paid = order.payment_status == 'Paid' %}
+            <div class="ord-card fade-up">
+                <div class="ord-main">
+                    <div class="ord-title">{{ order.service_name }}</div>
+                    <div class="ord-sub">
+                        <span class="chip-mini">#{{ order.id }}</span>
+                        <span class="chip-mini price">{{ t('currency') }} {{ order.service_price }}</span>
+                        {% if order.car_make %}<span class="chip-mini">🚗 {{ order.car_make }} {{ order.car_model or '' }} {{ order.car_year or '' }}</span>{% endif %}
+                        {% if order.location %}<span class="chip-mini">📍 {{ order.location }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="ord-status">
+                    {% if is_awaiting and not is_paid %}
+                        <span class="st-badge st-awaiting-payment">💳 {{ t('status_awaiting_payment') }}</span>
+                    {% elif order.status == 'Completed' and is_paid %}
+                        <span class="st-badge st-completed">✅ {{ t('status_completed') }}</span>
+                    {% else %}
+                        <span class="st-badge st-{{ order.status|lower|replace(' ', '-') }}">{{ t(st_key) }}</span>
+                    {% endif %}
+                    {% if is_paid %}
+                        <span class="st-badge st-completed">{{ t('payment_paid') }} • {{ order.payment_method }}</span>
+                    {% else %}
+                        <span class="st-badge st-pending">{{ t('payment_unpaid') }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="ord-actions">
+                    <a href="{{ url_for('track_order', order_id=order.id) }}" class="btn btn-soft btn-sm">{{ t('btn_track') }}</a>
+                    {% if is_awaiting and not is_paid %}
+                        <a href="{{ url_for('track_order', order_id=order.id) }}" class="btn btn-primary btn-sm">💳 {{ t('pay_now') }}</a>
+                    {% elif order.status == 'Pending' %}
+                        <a href="{{ url_for('cancel_order', order_id=order.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('{{ t('order_cancel_confirm') }}')">{{ t('btn_cancel') }}</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-card fade-up">
+            <span class="big">📭</span>
+            <h5>{{ t('dash_no_orders') }}</h5>
+            <p class="text-muted mb-3" style="font-size:.92rem;">{{ t('dash_no_orders_desc') }}</p>
+            <a href="{{ url_for('customer_dashboard') }}" class="btn btn-primary">{{ t('home_browse') }}</a>
+            <a href="{{ url_for('customer_services') }}" class="btn btn-outline-light mt-1 ms-2">{{ t('dash_book_service') }}</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

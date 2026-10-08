@@ -1,0 +1,53 @@
+{# كارت الدخول المقسوم 3 أجزاء: شريط التنقل + صورة ترحيب + الفورم.
+   مفيش شخصية ولا كشاف — بس التصميم اللي في الصورة المرجعية. #}
+{% macro stage() %}
+<div class="auth-wrap">
+    <div class="auth-split">
+
+        {# ===== الشريط الجانبي: التنقل بين دخول / تسجيل ===== #}
+        <aside class="auth-rail" aria-label="{{ t('auth_switch') }}">
+            <a href="{{ url_for('landing') }}" class="auth-rail-logo" aria-label="Dr. Car">
+                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Dr. Car" width="40" height="40">
+            </a>
+
+            <div class="auth-rail-tabs">
+                <a href="{{ url_for('login') }}"
+                   class="auth-rail-tab{{ ' active' if active == 'login' else '' }}">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v1h10.5a7.6 7.6 0 0 1-.4-2.4c0-1.3.4-2.5 1-3.6H12zM18 14a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-2.5 3.5 1.6 1.2 3-2.6.9 1.1-4 3.4-2.4-1.8.9-1.3z"/>
+                    </svg>
+                    <span>{{ t('auth_tab_login') }}</span>
+                </a>
+
+                <a href="{{ url_for('register') }}"
+                   class="auth-rail-tab{{ ' active' if active == 'register' else '' }}">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M10 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v1h10.3a7.6 7.6 0 0 1 5.4-2c.5 0 1 .1 1.5.2C18.6 15.4 14.6 14 10 14zm9 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm0 1.6a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zm0 3a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8z"/>
+                    </svg>
+                    <span>{{ t('auth_tab_register') }}</span>
+                </a>
+            </div>
+        </aside>
+
+        {# ===== الوسط: صورة ترحيب + عنوان الصفحة ===== #}
+        <div class="auth-art" aria-hidden="true">
+            <div class="auth-art-overlay"></div>
+            <div class="auth-art-body">
+                <h2>{{ t('auth_welcome_back') }}</h2>
+                <p>{{ t('auth_welcome_sub') }}</p>
+                <a href="{{ url_for('landing') }}" class="auth-art-link">
+                    {{ t('auth_terms') }}
+                </a>
+            </div>
+        </div>
+
+        {# ===== اليمين: الفورم ===== #}
+        <div class="auth-form-pane">
+            <div class="auth-pane-inner">
+                {{ caller() }}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endmacro %}

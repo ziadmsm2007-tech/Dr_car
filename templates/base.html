@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ lang_dir }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dr. Car - دكتور عربيتك | صيانة بثقة">
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}" type="image/svg+xml">
+    <title>{% block title %}Dr. Car{% endblock %}</title>
+    {% set bs = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" if lang_dir == "rtl" else "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" %}
+    <link href="{{ bs }}" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if current_user and current_user.role in ['client', 'technician'] %}has-bottom-nav{% endif %}">
+<script>document.documentElement.classList.add('js');</script>
+
+<div id="scrollProgress"></div>
+
+<nav class="navbar navbar-expand-lg app-navbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('landing') }}">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Dr. Car" width="40" height="40" style="border-radius:12px; box-shadow: 0 4px 12px rgba(255,90,0,.30);">
+            <span>Dr. Car <small style="font-weight:700; color:var(--muted); font-size:.72rem; margin-inline-start:.25rem;">دكتور عربيتك</small></span>
+        </a>
+        <button class="navbar-toggler nav-drawer-btn" type="button" id="navDrawerBtn" aria-label="Toggle navigation" aria-controls="navMain" aria-expanded="false">
+            <span class="bars"><span></span><span></span><span></span></span>
+        </button>
+        <div class="nav-drawer" id="navMain">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('landing') }}">{{ t('nav_home') }}</a></li>
+                {% if current_user %}
+                    {% if current_user.email.lower() == owner_email %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">🔐 {{ t('admin_owner_title') }}</a></li>
+                    {% endif %}
+                    {% if current_user.role == 'client' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('customer_dashboard') }}">{{ t('nav_dashboard') }}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('my_orders') }}">{{ t('nav_my_orders') }}</a></li>
+                    {% elif current_user.role == 'technician' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('technical_dashboard') }}">{{ t('nav_dashboard') }}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('technician_tasks') }}">{{ t('nav_my_tasks') }}</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('overview') }}">{{ t('nav_about') }}</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('contact_us') }}">{{ t('nav_contact') }}</a></li>
+
+                {% if current_user %}
+                {% if current_user.role == 'client' %}
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="{{ url_for('cart_view') }}" title="{{ t('cart_title') }}">
+                        🛒
+                        {% if cart_count %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" style="font-size:.62rem; padding:.25em .4em; background:var(--talabat); color:#000;">{{ cart_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="{{ url_for('notifications_page') }}" title="{{ t('notifications') }}">
+                        🔔
+                        {% if unread_notifications %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.62rem; padding:.25em .4em;">{{ unread_notifications }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item dropdown lang-dropdown ms-lg-2">
+                    <button class="btn btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        🌐 {{ LANGUAGES[lang] }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% for code, label in LANGUAGES.items() %}
+                        <li>
+                            <a class="dropdown-item {{ 'active' if lang == code else '' }}" href="{{ url_for('set_lang', code=code) }}">
+                                {% if code == 'en' %}🇬🇧{% elif code == 'ar' %}🇪🇬{% elif code == 'fr' %}🇫🇷{% endif %}
+                                {{ label }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+
+                {% if current_user %}
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-user-pill" href="{{ url_for('profile') }}" title="{{ t('profile_title') }}" style="text-decoration:none; display:inline-flex; align-items:center; gap:.35rem;">
+                            {% if current_user.avatar_url %}<img src="{{ current_user.avatar_url }}" alt="" referrerpolicy="no-referrer" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">{% else %}👤{% endif %}
+                            {{ current_user.name }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">{{ t('nav_logout') }}</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link" href="{{ url_for('login') }}">{{ t('nav_login') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary btn-sm px-3" href="{{ url_for('register') }}">{{ t('nav_register') }}</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="nav-backdrop" id="navBackdrop"></div>
+</nav>
+
+<main>
+<div class="container mt-4 mb-4">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-info alert-dismissible fade show fade-up" role="alert">
+                    {{ t(msg) if msg is string else msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+</main>
+
+<footer class="app-footer mt-auto">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h6 style="display:flex; align-items:center; gap:.5rem;"><img src="{{ url_for('static', filename='images/logo.svg') }}" width="28" height="28" style="border-radius:8px;"> Dr. Car</h6>
+                <p class="mb-3" style="font-size:.93rem">{{ t('brand_tagline') }}</p>
+                <p class="mb-0">{{ t('footer_about') }}</p>
+            </div>
+            <div class="col-md-2 col-6">
+                <h6>{{ t('footer_quick_links') }}</h6>
+                <a class="foot-link" href="{{ url_for('landing') }}">{{ t('nav_home') }}</a>
+                <a class="foot-link" href="{{ url_for('overview') }}">{{ t('nav_about') }}</a>
+                <a class="foot-link" href="{{ url_for('contact_us') }}">{{ t('nav_contact') }}</a>
+                <a class="foot-link" href="{{ url_for('login') }}">{{ t('nav_login') }}</a>
+            </div>
+            <div class="col-md-3 col-6">
+                <h6>{{ t('footer_services') }}</h6>
+                {% for c in ['Engine', 'Brakes', 'Electrical', 'Tires', 'Air Conditioning'] %}
+                    <a class="foot-link" href="{{ url_for('landing') }}#categories">{{ localize_category(c, lang) }}</a>
+                {% endfor %}
+            </div>
+            <div class="col-md-3">
+                <h6>{{ t('footer_get_in_touch') }}</h6>
+                <p class="mb-2" style="font-size:.93rem">📞 {{ t('contact_phone') }}</p>
+                <p class="mb-2" style="font-size:.93rem">✉️ {{ t('contact_email_label') }}: <span class="text-white">support@autocare.app</span></p>
+                <p class="mb-0" style="font-size:.93rem">🕘 {{ t('contact_hours') }}</p>
+            </div>
+        </div>
+        <div class="foot-bottom text-center">
+            © 2026 Dr. Car — {{ t('footer_rights') }}
+        </div>
+    </div>
+</footer>
+
+{% if current_user and current_user.role in ['client', 'technician'] %}
+<nav class="bottom-nav" aria-label="Mobile navigation">
+    {% if current_user.role == 'client' %}
+        <a href="{{ url_for('customer_dashboard') }}" class="bn-item {{ 'active' if request.endpoint in ['customer_dashboard', 'customer_services', 'service_details'] }}">
+            <span class="bn-ico">🏠</span><span class="bn-lbl">{{ t('nav_home') }}</span>
+        </a>
+        <a href="{{ url_for('cart_view') }}" class="bn-item bn-cart {{ 'active' if request.endpoint in ['cart_view', 'checkout'] }}">
+            <span class="bn-ico">🛒{% if cart_count %}<span class="bn-badge">{{ cart_count }}</span>{% endif %}</span><span class="bn-lbl">{{ t('cart_title') }}</span>
+        </a>
+        <a href="{{ url_for('my_orders') }}" class="bn-item {{ 'active' if request.endpoint in ['my_orders', 'track_order'] }}">
+            <span class="bn-ico">📋</span><span class="bn-lbl">{{ t('nav_my_orders') }}</span>
+        </a>
+        <a href="{{ url_for('notifications_page') }}" class="bn-item {{ 'active' if request.endpoint == 'notifications_page' }}">
+            <span class="bn-ico">🔔{% if unread_notifications %}<span class="bn-badge">{{ unread_notifications }}</span>{% endif %}</span><span class="bn-lbl">{{ t('notifications') }}</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="bn-item {{ 'active' if request.endpoint == 'profile' }}">
+            <span class="bn-ico">👤</span><span class="bn-lbl">{{ t('nav_profile') }}</span>
+        </a>
+    {% else %}
+        <a href="{{ url_for('technical_dashboard') }}" class="bn-item {{ 'active' if request.endpoint == 'technical_dashboard' }}">
+            <span class="bn-ico">🧑‍🔧</span><span class="bn-lbl">{{ t('nav_dashboard') }}</span>
+        </a>
+        <a href="{{ url_for('technician_tasks') }}" class="bn-item {{ 'active' if request.endpoint == 'technician_tasks' }}">
+            <span class="bn-ico">📋</span><span class="bn-lbl">{{ t('nav_my_tasks') }}</span>
+        </a>
+        <a href="{{ url_for('notifications_page') }}" class="bn-item {{ 'active' if request.endpoint == 'notifications_page' }}">
+            <span class="bn-ico">🔔{% if unread_notifications %}<span class="bn-badge">{{ unread_notifications }}</span>{% endif %}</span><span class="bn-lbl">{{ t('notifications') }}</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="bn-item {{ 'active' if request.endpoint == 'profile' }}"><span class="bn-ico">👤</span><span class="bn-lbl">{{ t('nav_profile') }}</span></a>
+    {% endif %}
+</nav>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+<script>
+/* ===== Navbar: حالة scrolled ===== */
+window.addEventListener('scroll',()=>{document.querySelector('.app-navbar')?.classList.toggle('scrolled', window.scrollY>10)},{passive:true});
+
+/* ===== شريط تقدم القراءة أعلى الصفحة ===== */
+const sp=document.getElementById('scrollProgress');
+if(sp){
+  const upd=()=>{const h=document.documentElement.scrollHeight-innerHeight; sp.style.transform='scaleX('+(h>0?Math.min(scrollY/h,1):0)+')';};
+  addEventListener('scroll',upd,{passive:true}); addEventListener('resize',upd); upd();
+}
+
+/* ===== درج الموبايل ===== */
+(function(){
+  const nav=document.getElementById('navMain'),
+        btn=document.getElementById('navDrawerBtn'),
+        bd=document.getElementById('navBackdrop');
+  if(!nav||!btn) return;
+  const close=()=>{nav.classList.remove('open');btn.classList.remove('open');btn.setAttribute('aria-expanded','false');bd?.classList.remove('show');document.body.classList.remove('nav-locked');};
+  btn.addEventListener('click',e=>{e.stopPropagation();nav.classList.contains('open')?close():(nav.classList.add('open'),btn.classList.add('open'),btn.setAttribute('aria-expanded','true'),bd?.classList.add('show'),document.body.classList.add('nav-locked'));});
+  bd?.addEventListener('click',close);
+  nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
+  addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  let w=innerWidth;
+  addEventListener('resize',()=>{if(innerWidth!==w){w=innerWidth;if(innerWidth>=992)close();}});
+})();
+
+/* ===== Reveal عند السكرول =====
+   العناصر اللي عليها rv-js بتظهر ورا بعض لما توصل شاشة الموبايل.
+   الإخفاء بيحصل بس لو الجافاسكريبت اشتغل (html.js) — غير كده الصفحة تفضل ظاهرة. */
+const io=('IntersectionObserver' in window)?new IntersectionObserver(es=>{
+  let i=0;
+  es.forEach(en=>{if(en.isIntersecting){en.target.style.transitionDelay=(i++*70)+'ms';en.target.classList.add('in');io.unobserve(en.target);setTimeout(()=>{en.target.style.transitionDelay='';},900+i*70);}})
+},{threshold:.1,rootMargin:'0px 0px -5% 0px'}):null;
+document.querySelectorAll('.rv-js').forEach(el=>{io?io.observe(el):el.classList.add('in');});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_home') }} - Dr. Car{% endblock %}
+{% block extra_css %}
+<style>
+.tb-cat.active{border-color:var(--talabat); box-shadow:0 0 0 2px var(--talabat), 0 10px 22px rgba(128,0,32,.28)}
+.tb-cat.active .nm{color:var(--talabat)}
+.tb-cat.active .cnt{color:var(--talabat)}
+.home-count{color:rgba(255,255,255,.6); font-weight:700; font-size:.85rem}
+.price-na{font-size:.72rem!important; font-weight:800!important; opacity:.85}
+</style>
+{% endblock %}
+{% block content %}
+<div class="app-home" id="services">
+
+    <!-- شريط العنوان — زي "التوصيل إلى" في طلبات -->
+    <a class="tb-address fade-up" href="{{ url_for('profile') }}" style="text-decoration:none; color:inherit; display:flex;">
+        <span class="ic">📍</span>
+        <div class="flex-grow-1">
+            <div class="lbl">{{ t('home_deliver_to') }}</div>
+            <div class="val">
+                {% if gov %}{{ gov }}{% if city %} — {{ city }}{% endif %}{% else %}{{ t('home_set_location') }}{% endif %}
+            </div>
+        </div>
+    </a>
+
+    <!-- البحث -->
+    <div class="tb-search fade-up d-1">
+        <div class="input-icon-wrap">
+            <span class="lead">🔎</span>
+            <input type="text" id="homeSearch" class="form-control" placeholder="{{ t('home_search_ph') }}" oninput="homeFilter(this.value)">
+        </div>
+    </div>
+
+    <!-- شريط التصنيفات -->
+    <div class="tb-section-h">
+        <h5>🧰 {{ t('cats_title') }}</h5>
+        <span class="home-count">{{ '—' if not active_cat else active_cat }}</span>
+    </div>
+    <div class="tb-scroller fade-up d-2">
+        <a class="tb-cat {{ 'active' if not active_cat else '' }}" href="{{ url_for('customer_dashboard') }}">
+            <span class="emoji">✨</span>
+            <span class="nm">{{ t('services_title') }}</span>
+            <span class="cnt">{{ t('dash_view_all') }}</span>
+        </a>
+        {% for cat, cat_services in categories.items() %}
+        <a class="tb-cat {{ 'active' if active_cat == cat else '' }}" href="{{ url_for('customer_dashboard', cat=cats_meta[cat]) }}">
+            <span class="emoji">
+                {% if cat in ['Engine', 'المحرك'] %}🛠️{% elif cat in ['Brakes', 'الفرامل'] %}🛑{% elif cat in ['Electrical', 'الكهرباء'] %}💡{% elif cat in ['Suspension', 'التعليق'] %}🔄{% elif cat in ['Cooling', 'التبريد'] %}❄️{% elif cat in ['Tires', 'الإطارات'] %}🛞{% elif cat in ['Transmission', 'ناقل الحركة'] %}⚙️{% elif cat in ['Exhaust', 'العادم'] %}💨{% elif cat in ['Air Conditioning', 'التكييف'] %}🧊{% elif cat in ['Sensors', 'الحساسات'] %}📡{% elif cat in ['Computers', 'الكمبيوتر'] %}💻{% elif cat in ['Detailing', 'التلميع والعناية'] %}✨{% elif cat in ['Roadside Assistance', 'المساعدة على الطريق'] %}🆘{% else %}🔧{% endif %}
+            </span>
+            <span class="nm">{{ cat }}</span>
+            <span class="cnt">{{ cat_services | length }} {{ t('services_available') }}</span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- كل الخدمات -->
+    <div class="tb-section-h">
+        <h5>🔥 {{ t('services_title') }}</h5>
+        <span class="home-count">{{ services | length }} {{ t('services_available') }}</span>
+    </div>
+    <div class="row g-3" id="homeGrid">
+        {% for s in services %}
+        <div class="col-6 col-md-4 col-lg-3 home-item fade-up" data-name="{{ s.name }} {{ s.cat_label }}">
+            <div class="tb-svc-card">
+                <a class="tb-svc-link" href="{{ url_for('service_details', service_id=s.id) }}">
+                    <div class="tb-svc-media" style="background:{{ s.visual.bg }};">
+                        <img src="{{ s.image }}" alt="{{ s.name }}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+                        <span class="fallback" style="display:none;">{{ s.visual.emoji }}</span>
+                        <span class="cat-pill">{{ s.cat_label }}</span>
+                        <span class="time-pill">⏱ {{ t('svc_time_val') }}</span>
+                    </div>
+                    <div class="tb-svc-body">
+                        <div class="ttl">{{ s.name }}</div>
+                        <div class="mt">
+                            <span class="rate">⭐ 4.8</span>
+                            <span class="price price-na">🚗 {{ t('price_by_car') }}</span>
+                        </div>
+                    </div>
+                </a>
+                <form method="post" action="{{ url_for('cart_add', service_id=s.id) }}" class="tb-svc-foot">
+                    <button type="submit" class="tb-add-btn">🛒 {{ t('cart_add') }}</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div id="homeEmpty" class="text-center text-muted d-none mt-3">🔍 {{ t('home_no_results') }}</div>
+
+    <!-- الطلبات الأخيرة -->
+    <div class="panel mt-4">
+        <div class="panel-head">
+            <span>📋 {{ t('dash_recent') }}</span>
+            <a href="{{ url_for('my_orders') }}" class="btn btn-soft btn-sm">{{ t('btn_track') }} →</a>
+        </div>
+        <div class="panel-body">
+            {% if orders %}
+            <div class="table-responsive">
+                <table class="tbl-modern">
+                    <thead>
+                        <tr>
+                            <th>{{ t('th_id') }}</th>
+                            <th>{{ t('th_service') }}</th>
+                            <th>{{ t('th_status') }}</th>
+                            <th>{{ t('th_actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td class="fw-bold" style="color:#fff">{{ order.service_name }}</td>
+                            <td><span class="st-badge st-{{ order.status|lower|replace(' ', '-') }}">{{ t('status_' ~ order.status|lower|replace(' ', '_')) }}</span></td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('track_order', order_id=order.id) }}" class="btn btn-soft btn-sm">{{ t('btn_track') }}</a>
+                                    {% if order.status == 'Pending' %}
+                                    <a href="{{ url_for('cancel_order', order_id=order.id) }}" class="btn btn-outline-danger btn-sm">{{ t('btn_cancel') }}</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <span class="empty-icon">📭</span>
+                <p>{{ t('dash_no_orders') }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if cart_count %}
+<a href="{{ url_for('cart_view') }}" class="btn btn-primary" style="position:fixed; inset-inline-end:16px; bottom:96px; z-index:1500; border-radius:99px; padding:.7rem 1.1rem; font-weight:900; box-shadow:0 12px 30px rgba(128,0,32,.5);">
+    🛒 {{ t('cart_view_btn') }} · {{ cart_count }}
+</a>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function homeFilter(q){
+  q=(q||'').toLowerCase().trim();
+  var shown=0;
+  document.querySelectorAll('.home-item').forEach(function(el){
+    var m = !q || el.getAttribute('data-name').toLowerCase().indexOf(q)!==-1;
+    el.style.display = m ? '' : 'none';
+    if(m) shown++;
+  });
+  var empty=document.getElementById('homeEmpty');
+  if(empty) empty.classList.toggle('d-none', shown!==0);
+}
+</script>
+{% endblock %}

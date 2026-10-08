@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{{ t('admin_owner_title') }} - AutoCare{% endblock %}
+{% block content %}
+<div class="page-head fade-up">
+    <h3>🔐 {{ t('admin_owner_title') }}</h3>
+    <p>{{ t('admin_owner_sub') }} — {{ t('admin_private_note') }}</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-2 col-md-4 col-sm-6 fade-up">
+        <div class="stat-card stat-navy">
+            <span class="stat-icon">📦</span>
+            <div class="stat-label">{{ t('admin_total_orders') }}</div>
+            <h3>{{ stats.total_orders }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 fade-up d-1">
+        <div class="stat-card stat-orange">
+            <span class="stat-icon">⏳</span>
+            <div class="stat-label">{{ t('admin_pending') }}</div>
+            <h3>{{ stats.pending_orders }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 fade-up d-2">
+        <div class="stat-card stat-green">
+            <span class="stat-icon">✅</span>
+            <div class="stat-label">{{ t('admin_completed') }}</div>
+            <h3>{{ stats.completed_orders }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 fade-up d-3">
+        <div class="stat-card stat-blue">
+            <span class="stat-icon">👤</span>
+            <div class="stat-label">{{ t('admin_clients') }}</div>
+            <h3>{{ stats.total_clients }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 fade-up d-4">
+        <div class="stat-card stat-purple">
+            <span class="stat-icon">🛠️</span>
+            <div class="stat-label">{{ t('admin_technicians') }}</div>
+            <h3>{{ stats.total_technicians }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-sm-6 fade-up d-5">
+        <div class="stat-card stat-teal">
+            <span class="stat-icon">👥</span>
+            <div class="stat-label">{{ t('admin_total_users') }}</div>
+            <h3>{{ stats.total_users }}</h3>
+        </div>
+    </div>
+</div>
+
+{% if pending_techs %}
+<div class="panel fade-up mb-4" style="border:1.5px solid var(--burgundy); background:#fdf3f5;">
+    <div class="panel-head" style="background:#fbe4e9; border-left-color:var(--burgundy);"><span>⏳ فنيين بانتظار الموافقة ({{ pending_techs|length }})</span></div>
+    <div class="panel-body">
+        <div class="row g-3">
+            {% for tech in pending_techs %}
+            <div class="col-md-6">
+                <div class="d-flex gap-3 align-items-center p-3" style="background:#fff; border:1px solid #fde68a; border-radius:12px;">
+                    {% if tech.photo %}
+                        <img src="{{ url_for('static', filename=tech.photo) }}" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid var(--burgundy);">
+                    {% else %}
+                        <div style="width:56px; height:56px; border-radius:50%; background:#fbe4e9; display:grid; place-items:center; font-size:1.6rem;">👤</div>
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">{{ tech.name }}</div>
+                        <div class="small text-muted">{{ tech.email }} • {{ tech.governorate or '' }} {{ tech.city or '' }}</div>
+                    </div>
+                    <form method="POST" action="{{ url_for('approve_technician', user_id=tech.id) }}">
+                        <button class="btn btn-success btn-sm">✅ موافقة</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="panel fade-up mb-4" style="border: 1.5px solid var(--talabat);">
+    <div class="panel-head" style="border-left-color: var(--talabat); background: #fdeef1;"><span>💰 {{ t('admin_money_title') }}</span></div>
+    <div class="panel-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="stat-card" style="background:#ecfdf5; border-left:4px solid #059669; color:#065f46;">
+                    <div class="stat-label" style="color:#065f46;">{{ t('admin_revenue_paid') }}</div>
+                    <h3 style="color:#065f46;">{{ t('currency') }} {{ stats.revenue_paid }}</h3>
+                    <span class="stat-icon" style="color:#059669;">💵</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card" style="background:#fdf3f5; border-left:4px solid var(--burgundy); color:#800020;">
+                    <div class="stat-label" style="color:#92400e;">{{ t('admin_revenue_pending') }}</div>
+                    <h3 style="color:#92400e;">{{ t('currency') }} {{ stats.revenue_pending }}</h3>
+                    <span class="stat-icon" style="color:#d97706;">⏳</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card" style="background:#fef2f2; border-left:4px solid #dc2626; color:#991b1b;">
+                    <div class="stat-label" style="color:#991b1b;">{{ t('admin_revenue_cancelled') }} ({{ stats.rejected_orders }})</div>
+                    <h3 style="color:#991b1b;">{{ stats.rejected_orders }} {{ t('orders_count') }}</h3>
+                    <span class="stat-icon" style="color:#dc2626;">🚫</span>
+                </div>
+            </div>
+        </div>
+        {% if suspicious %}
+        <div class="alert alert-warning mt-3 mb-0" style="border-left:4px solid #d97706;">
+            <strong>⚠️ {{ t('admin_suspicious') }} ({{ suspicious|length }})</strong>
+            <div class="table-responsive mt-2">
+                <table class="tbl-modern">
+                    <thead><tr><th>#</th><th>{{ t('th_customer') }}</th><th>{{ t('th_service') }}</th><th>{{ t('th_price') }}</th><th>{{ t('th_status') }}</th></tr></thead>
+                    <tbody>
+                    {% for o in suspicious %}
+                    <tr><td>#{{ o.id }}</td><td>{{ o.name }}</td><td>{{ o.service_name }}</td><td>{{ t('currency') }} {{ o.service_price }}</td><td><span class="st-badge st-rejected">{{ t('status_rejected') }}</span> • #{{ o.technician_id }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="small text-muted mt-3">✅ {{ t('admin_no_suspicious') }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel fade-up mb-4" style="border:1.5px solid #059669;">
+    <div class="panel-head" style="background:#ecfdf5; border-left-color:#059669;"><span>🏦 {{ t('commission_label') }} — 20% | {{ t('payout_pending') }}: {{ t('currency') }} {{ "%.0f"|format(stats.payout_pending_total) }} | {{ t('admin_revenue_paid') }}: {{ t('currency') }} {{ stats.revenue_paid }}</span></div>
+    <div class="panel-body">
+        <div class="small text-muted mb-3">📱 {{ t('escrow_note', vodafone=owner_vodafone, instapay=owner_instapay) }}</div>
+        {% if tech_earnings %}
+        <div class="table-responsive">
+            <table class="tbl-modern">
+                <thead><tr><th>{{ t('th_name') }}</th><th>{{ t('th_orders') }}</th><th>{{ t('commission_label') }}</th><th>{{ t('payout_pending') }}</th><th>💼 المحفظة</th></tr></thead>
+                <tbody>
+                {% for tid, e in tech_earnings.items() %}
+                <tr>
+                    <td class="fw-bold">#{{ tid }}</td>
+                    <td>{{ e.count }} — {{ t('currency') }} {{ "%.0f"|format(e.total) }}</td>
+                    <td style="color:#800020; font-weight:700;">{{ t('currency') }} {{ "%.0f"|format(e.commission) }}</td>
+                    <td style="color:#065f46; font-weight:700;">{{ t('currency') }} {{ "%.0f"|format(e.pending_payout) }}</td>
+                    <td>
+                        <span class="st-badge" style="background:{% if wallets[tid] >=0 %}#ecfdf5;color:#065f46{% else %}#fef2f2;color:#991b1b{% endif %}; border:1px solid #e5e7eb;">{{ t('currency') }} {{ "%.0f"|format(wallets[tid]) }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% if pending_payouts %}
+        <hr>
+        <h6 class="fw-bold">⏳ {{ t('payout_pending') }} ({{ pending_payouts|length }})</h6>
+        <div class="table-responsive">
+            <table class="tbl-modern">
+                <thead><tr><th>#</th><th>{{ t('th_service') }}</th><th>{{ t('th_price') }}</th><th>الفني</th><th>{{ t('payout_pending') }} 80%</th><th></th></tr></thead>
+                <tbody>
+                {% for o in pending_payouts %}
+                <tr>
+                    <td>#{{ o.id }}</td><td>{{ o.service_name }}</td><td>{{ t('currency') }} {{ o.service_price }}</td><td>#{{ o.technician_id }}</td><td style="color:#065f46; font-weight:800;">{{ t('currency') }} {{ "%.0f"|format(o.service_price * 0.8) }}</td>
+                    <td><form method="POST" action="{{ url_for('mark_payout', order_id=o.id) }}"><button class="btn btn-sm btn-success">✅ {{ t('payout_paid') }}</button></form></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="small text-muted mt-2">✅ لا يوجد مستحقات معلقة للفنيين</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel fade-up mb-4">
+    <div class="panel-head"><span>👥 {{ t('admin_all_users') }} — {{ users_data|length }}</span></div>
+    <div class="panel-body">
+        {% if users_data %}
+        <div class="table-responsive">
+            <table class="tbl-modern">
+                <thead>
+                    <tr>
+                        <th>{{ t('th_id') }}</th>
+                        <th>{{ t('th_name') }}</th>
+                        <th>{{ t('th_email') }}</th>
+                        <th>{{ t('th_role') }}</th>
+                        <th>{{ t('th_orders') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users_data %}
+                    <tr>
+                        <td>#{{ u.id }}</td>
+                        <td class="fw-bold" style="color:var(--navy-800)">{{ u.name }}</td>
+                        <td style="font-size:.9rem">{{ u.email }}</td>
+                        <td>
+                            {% if u.role == 'client' %}<span class="st-badge st-pending">{{ t('auth_role_client') }}</span>
+                            {% elif u.role == 'technician' %}<span class="st-badge st-in-progress">🛠️ {{ t('auth_role_technician') }}</span>
+                            {% else %}<span class="st-badge" style="background:#1e293b;color:#fff">{{ t('nav_admin_panel') }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ u.orders_count }}</strong> {% if u.role == 'client' %}{{ t('admin_user_orders') }}{% elif u.role == 'technician' %}{{ t('admin_user_jobs') }}{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><span class="empty-icon">👥</span><p class="mb-0">{{ t('admin_no_users') }}</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel fade-up">
+    <div class="panel-head"><span>🕘 {{ t('admin_recent') }}</span></div>
+    <div class="panel-body">
+        {% if recent_orders %}
+        <div class="table-responsive">
+            <table class="tbl-modern">
+                <thead>
+                    <tr>
+                        <th>{{ t('th_id') }}</th>
+                        <th>{{ t('th_customer') }}</th>
+                        <th>{{ t('th_service') }}</th>
+                        <th>{{ t('order_payment') }}</th>
+                        <th>{{ t('th_status') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td class="fw-bold" style="color:var(--navy-800)">{{ order.name }}</td>
+                        <td>{{ order.service_name }}</td>
+                        <td>{{ order.payment_method }}</td>
+                        <td><span class="st-badge st-{{ order.status|lower|replace(' ', '-') }}">{{ t('status_' ~ order.status|lower|replace(' ', '_')) }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><span class="empty-icon">📭</span><p class="mb-0">{{ t('admin_no_orders') }}</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ t('cart_title') }} - Dr. Car{% endblock %}
+{% block extra_css %}
+<style>
+.tb-page{max-width:760px; margin:0 auto;}
+.tb-card{background:#fff; border:1px solid #eee; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.06); overflow:hidden;}
+.tb-head{display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:1.1rem 1.3rem; background:linear-gradient(135deg,var(--talabat),var(--burgundy-2)); color:#fff;}
+.tb-head h4{margin:0; font-weight:900;}
+.tb-item{display:flex; gap:.9rem; align-items:center; padding:1rem 1.3rem; border-bottom:1px solid #f2f2f2;}
+.tb-thumb{width:72px; height:72px; border-radius:14px; object-fit:cover; flex-shrink:0; background:#faf0f3; border:1px solid #f0dde3;}
+.tb-thumb-emoji{display:grid; place-items:center; font-size:2rem;}
+.tb-item .tb-name{font-weight:800; color:#212121; line-height:1.3;}
+.tb-item .tb-desc{font-size:.82rem; color:#8a8f98;}
+.tb-item .tb-unit{font-weight:900; color:var(--talabat);}
+.tb-item .tb-unit-na{font-size:.78rem; font-weight:800; color:#9a5b13; background:#fff7ed; border:1px dashed #f5c78a; border-radius:99px; padding:.15rem .6rem; display:inline-block}
+.tb-qty{display:flex; align-items:center; gap:.35rem; flex-shrink:0;}
+.tb-qty button{width:32px; height:32px; border-radius:10px; border:1.5px solid #e8b3c0; background:#fdeef1; color:#800020; font-weight:900; font-size:1.1rem; cursor:pointer; line-height:1;}
+.tb-qty button:hover{background:#f7dde3;}
+.tb-qty span{min-width:26px; text-align:center; font-weight:900; color:#212121;}
+.tb-remove{border:none; background:none; color:#b0b4bb; cursor:pointer; font-size:1.15rem; padding:.2rem .3rem; border-radius:8px;}
+.tb-remove:hover{color:#e53935; background:#fdecea;}
+.tb-summary{padding:1.2rem 1.3rem; background:#fdf6f8; border-top:1px solid #f2dde3;}
+.tb-row{display:flex; justify-content:space-between; padding:.28rem 0; color:#4a4f57; font-weight:700;}
+.tb-row.total{font-size:1.2rem; font-weight:900; color:#212121; border-top:1px dashed #e6ccd4; margin-top:.5rem; padding-top:.7rem;}
+.tb-empty{text-align:center; padding:3rem 1.5rem; color:#8a8f98;}
+.tb-empty .big{font-size:4rem;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="tb-page">
+    <div class="tb-card fade-up">
+        <div class="tb-head">
+            <h4>🛒 {{ t('cart_title') }} <small style="opacity:.85; font-weight:700;">{{ items|length }}</small></h4>
+            {% if items %}
+            <form method="post" action="{{ url_for('cart_clear') }}" style="margin:0;">
+                <button class="tb-remove" style="color:#fff;" title="{{ t('cart_clear') }}">🗑️</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if items %}
+            {% for i in items %}
+            <div class="tb-item">
+                <div class="tb-thumb" style="position:relative; overflow:hidden; padding:0;">
+                    {% if i.image %}<img src="{{ i.image }}" alt="{{ i.name }}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">{% endif %}
+                    <span class="tb-thumb-emoji" style="width:100%;height:100%;{% if i.image %}display:none;{% endif %}">{{ i.visual.emoji }}</span>
+                </div>
+                <div class="flex-grow-1 min-width-0">
+                    <div class="tb-name">{{ i.name }}</div>
+                    <div class="tb-desc">{{ i.description }}</div>
+                    <div class="mt-1"><span class="tb-unit-na">🚗 {{ t('price_after_car') }}</span></div>
+                </div>
+                <form method="post" action="{{ url_for('cart_update', service_id=i.service_id) }}" class="tb-qty">
+                    <button name="qty" value="{{ i.qty - 1 }}" aria-label="minus">−</button>
+                    <span>{{ i.qty }}</span>
+                    <button name="qty" value="{{ i.qty + 1 }}" aria-label="plus">+</button>
+                </form>
+                <form method="post" action="{{ url_for('cart_remove', service_id=i.service_id) }}" style="margin:0;">
+                    <button class="tb-remove" title="{{ t('cart_remove') }}">✕</button>
+                </form>
+            </div>
+            {% endfor %}
+
+            <div class="tb-summary">
+                <div class="tb-row"><span>{{ t('cart_delivery') }}</span><span>{{ t('cart_delivery_val') }}</span></div>
+                <div class="tb-row"><span class="small text-muted">{{ t('cart_pay_note') }}</span></div>
+                <div class="tb-row total"><span>{{ t('cart_total') }}</span><span style="font-size:.85rem; font-weight:800; color:#9a5b13;">{{ t('price_pick_car') }}</span></div>
+                <a href="{{ url_for('checkout') }}" class="btn btn-primary w-100 btn-lg mt-3">{{ t('cart_checkout') }} →</a>
+                <a href="{{ url_for('customer_services') }}" class="btn btn-outline-secondary w-100 mt-2">{{ t('cart_add_more') }}</a>
+            </div>
+        {% else %}
+            <div class="tb-empty">
+                <div class="big">🛒</div>
+                <h5 class="fw-bold mt-2">{{ t('cart_empty') }}</h5>
+                <p>{{ t('cart_empty_hint') }}</p>
+                <a href="{{ url_for('customer_services') }}" class="btn btn-primary btn-lg mt-2">{{ t('hero_btn_browse') }}</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

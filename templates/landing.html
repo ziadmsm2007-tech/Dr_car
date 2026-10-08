@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}AutoCare - Car Service Booking{% endblock %}
+{% block content %}
+
+<div class="hero fade-up">
+    <div class="hero-orb hero-orb1"></div><div class="hero-orb hero-orb2"></div>
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <span class="hero-badge">✨ {{ t('hero_badge') }}</span>
+            <h1><span>{{ t('hero_title') }}</span></h1>
+            <p class="lead mt-3">{{ t('hero_subtitle') }}</p>
+            <div class="d-flex gap-2 mt-4 flex-wrap">
+                {% if current_user and current_user.role == 'client' %}
+                    <a href="{{ url_for('customer_services') }}" class="btn btn-primary btn-lg">{{ t('hero_btn_browse') }}</a>
+                    <a href="{{ url_for('customer_dashboard') }}" class="btn btn-outline-light btn-lg">{{ t('nav_dashboard') }}</a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">{{ t('hero_btn_get_started') }}</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">{{ t('hero_btn_login') }}</a>
+                {% endif %}
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <h3>4,800+</h3>
+                    <span>🚗 {{ t('hero_stat_cars') }}</span>
+                </div>
+                <div class="hero-stat">
+                    <h3>150+</h3>
+                    <span>🛠️ {{ t('hero_stat_techs') }}</span>
+                </div>
+                <div class="hero-stat">
+                    <h3>3,900+</h3>
+                    <span>😊 {{ t('hero_stat_clients') }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5 d-none d-lg-block">
+            <div class="hero-art">
+                <div class="hero-gear">⚙️</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="mt-5">
+    <div class="text-center mb-4 rv-js">
+        <span class="kicker">{{ t('brand_tagline') }}</span>
+        <h2 class="section-title">{{ t('hero_subtitle') }}</h2>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4 reveal reveal-1">
+            <div class="s-card feat-card rv-js">
+                <div class="icon-badge">🛠️</div>
+                <h5>{{ t('feat_title_expert') }}</h5>
+                <p>{{ t('feat_title_expert_d') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4 reveal reveal-2">
+            <div class="s-card feat-card rv-js">
+                <div class="icon-badge">📍</div>
+                <h5>{{ t('feat_title_track') }}</h5>
+                <p>{{ t('feat_title_track_d') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4 reveal reveal-3">
+            <div class="s-card feat-card rv-js">
+                <div class="icon-badge">💳</div>
+                <h5>{{ t('feat_title_payment') }}</h5>
+                <p>{{ t('feat_title_payment_d') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4 reveal reveal-4">
+            <div class="s-card feat-card rv-js">
+                <div class="icon-badge">⚡</div>
+                <h5>{{ t('feat_title_fast') }}</h5>
+                <p>{{ t('feat_title_fast_d') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4 reveal reveal-5">
+            <div class="s-card feat-card rv-js">
+                <div class="icon-badge">🔩</div>
+                <h5>{{ t('feat_title_quality') }}</h5>
+                <p>{{ t('feat_title_quality_d') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4 reveal reveal-6">
+            <div class="s-card feat-card rv-js">
+                <div class="icon-badge">🎧</div>
+                <h5>{{ t('feat_title_support') }}</h5>
+                <p>{{ t('feat_title_support_d') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories preview -->
+<div class="mt-5" id="categories">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+        <div>
+            <span class="kicker">{{ t('nav_services') }}</span>
+            <h2 class="section-title">{{ t('cats_title') }}</h2>
+            <p class="section-sub">{{ t('cats_subtitle') }}</p>
+        </div>
+        {% if current_user and current_user.role == 'client' %}
+            <a href="{{ url_for('customer_services') }}" class="btn btn-navy">{{ t('hero_btn_browse') }}</a>
+        {% endif %}
+    </div>
+    <div class="row g-3">
+        {% for cat, services in landing_categories.items() %}
+        <div class="col-lg-3 col-md-4 col-sm-6 fade-up">
+            <a class="s-card cat-card cat-link rv-js text-decoration-none" href="{{ url_for('customer_services', cat=cat) }}">
+                <span class="cat-icon">
+                    {% if cat in ['Engine', 'المحرك'] %}🛠️{% elif cat in ['Brakes', 'الفرامل'] %}🛑{% elif cat in ['Electrical', 'الكهرباء'] %}💡{% elif cat in ['Suspension', 'التعليق'] %}🔄{% elif cat in ['Cooling', 'التبريد'] %}❄️{% elif cat in ['Tires', 'الإطارات'] %}🛞{% elif cat in ['Transmission', 'ناقل الحركة'] %}⚙️{% elif cat in ['Exhaust', 'العادم'] %}💨{% elif cat in ['Air Conditioning', 'التكييف'] %}🧊{% elif cat in ['Detailing', 'التلميع والعناية'] %}✨{% elif cat in ['Roadside Assistance', 'المساعدة على الطريق'] %}🆘{% else %}🔧{% endif %}
+                </span>
+                <h6>{{ cat }}</h6>
+                <small class="text-muted">{{ services | length }} {{ t('services_available') }}</small>
+                <span class="mini-step mt-2">{{ t('btn_details') }} ←</span>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- How it works -->
+<div class="mt-5">
+    <div class="text-center mb-4">
+        <span class="kicker">3</span>
+        <h2 class="section-title">{{ t('how_title') }}</h2>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4 text-center fade-up rv-js">
+            <div class="icon-badge mx-auto" style="width:72px;height:72px;font-size:2rem;">1️⃣</div>
+            <h5 class="fw-bold mt-3" style="color:var(--navy-800)">{{ t('how_step1_title') }}</h5>
+            <p class="text-muted">{{ t('how_step1_desc') }}</p>
+        </div>
+        <div class="col-md-4 text-center fade-up rv-js d-2">
+            <div class="icon-badge mx-auto" style="width:72px;height:72px;font-size:2rem;">2️⃣</div>
+            <h5 class="fw-bold mt-3" style="color:var(--navy-800)">{{ t('how_step2_title') }}</h5>
+            <p class="text-muted">{{ t('how_step2_desc') }}</p>
+        </div>
+        <div class="col-md-4 text-center fade-up rv-js d-3">
+            <div class="icon-badge mx-auto" style="width:72px;height:72px;font-size:2rem;">3️⃣</div>
+            <h5 class="fw-bold mt-3" style="color:var(--navy-800)">{{ t('how_step3_title') }}</h5>
+            <p class="text-muted">{{ t('how_step3_desc') }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="hero mt-5 text-center">
+    <h2 class="fw-bold" style="font-size:clamp(1.6rem,3vw,2.4rem)">{{ t('cta_title') }}</h2>
+    <p class="lead mx-auto" style="max-width:34rem">{{ t('cta_subtitle') }}</p>
+    {% if not current_user %}
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">{{ t('cta_btn') }}</a>
+    {% else %}
+        <a href="{{ url_for('customer_dashboard') if current_user.role == 'client' else url_for('landing') }}" class="btn btn-primary btn-lg">{{ t('nav_dashboard') }}</a>
+    {% endif %}
+</div>
+
+{% endblock %}

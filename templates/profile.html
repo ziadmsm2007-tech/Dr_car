@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ t('profile_title') }} - Dr. Car{% endblock %}
+{% block extra_css %}
+{% from "_location_picker.html" import lp_css with context %}
+{{ lp_css() }}
+<style>
+.pf-page{max-width:920px; margin:0 auto}
+.pf-hero{
+  display:flex; align-items:center; gap:1.1rem; flex-wrap:wrap; padding:1.3rem 1.4rem; border-radius:22px;
+  background:linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.14); box-shadow:0 14px 36px rgba(0,0,0,.28); backdrop-filter:blur(14px);
+}
+.pf-avatar{
+  width:84px; height:84px; border-radius:50%; flex-shrink:0; display:grid; place-items:center; overflow:hidden;
+  background:linear-gradient(135deg,#800020,#e8590c); color:#fff; font-weight:900; font-size:2.1rem;
+  border:3px solid rgba(255,255,255,.35); box-shadow:0 8px 20px rgba(0,0,0,.35);
+}
+.pf-avatar img{width:100%; height:100%; object-fit:cover; display:block}
+.pf-name{font-weight:900; color:#fff; font-size:1.45rem; line-height:1.2; margin:0}
+.pf-mail{color:rgba(255,255,255,.7); font-size:.9rem; direction:ltr; unicode-bidi:plaintext}
+.pf-badges{display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.5rem}
+.pf-badge{
+  display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .7rem; border-radius:99px; font-size:.75rem; font-weight:800;
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); color:#fff;
+}
+.pf-badge.warn{background:rgba(245,158,11,.2); border-color:rgba(245,158,11,.4); color:#fde68a}
+
+.pf-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:.8rem; margin:1rem 0}
+.pf-stat{
+  text-align:center; padding:.9rem .6rem; border-radius:16px; background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+}
+.pf-stat b{display:block; font-size:1.35rem; color:#fff; font-weight:900}
+.pf-stat span{font-size:.74rem; color:rgba(255,255,255,.65); font-weight:700}
+
+.pf-card{background:#fff; border:1px solid #eee; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden}
+.pf-card-head{background:linear-gradient(135deg,var(--talabat),#f97316); color:#fff; padding:1rem 1.3rem}
+.pf-card-head h5{margin:0; font-weight:900}
+.pf-body{padding:1.3rem}
+.pf-label{display:block; font-weight:800; color:#333; font-size:.85rem; margin-bottom:.4rem}
+.pf-body .form-control,.pf-body .form-select{
+  border-radius:12px; border:1.5px solid #e2e5ea; background:#fafbfc; padding:.7rem .85rem; color:#1f232b;
+}
+.pf-body .form-control:focus,.pf-body .form-select:focus{border-color:var(--talabat); background:#fff; box-shadow:0 0 0 4px rgba(128,0,32,.12)}
+.pf-body .form-control[readonly]{background:#f1f3f5; color:#6b7280}
+.pf-welcome{
+  border-radius:16px; padding:.9rem 1.1rem; margin-bottom:1rem; font-weight:700;
+  background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.4); color:#d1fae5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% from "_location_picker.html" import picker with context %}
+<div class="pf-page">
+
+    {% if welcome %}
+    <div class="pf-welcome fade-up">👋 {{ t('profile_welcome') }}</div>
+    {% endif %}
+
+    <div class="pf-hero fade-up">
+        <div class="pf-avatar">
+            {% if u.photo %}<img src="{{ url_for('static', filename=u.photo) }}" alt="">
+            {% elif u.avatar_url %}<img src="{{ u.avatar_url }}" alt="" referrerpolicy="no-referrer">
+            {% else %}{{ (u.name or '?')[:1]|upper }}{% endif %}
+        </div>
+        <div class="flex-grow-1">
+            <h2 class="pf-name">{{ u.name }}</h2>
+            <div class="pf-mail">{{ u.email }}</div>
+            <div class="pf-badges">
+                {% if u.role == 'client' %}<span class="pf-badge">🚗 {{ t('auth_role_client') }}</span>
+                {% elif u.role == 'technician' %}<span class="pf-badge">🛠️ {{ t('auth_role_technician') }}</span>
+                {% else %}<span class="pf-badge">🔐 Admin</span>{% endif %}
+                {% if u.oauth_provider == 'google' %}<span class="pf-badge">G · Google</span>{% endif %}
+                {% if u.role == 'technician' and not u.is_approved %}<span class="pf-badge warn">⏳ {{ t('flash_tech_pending') }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="pf-stats fade-up d-1">
+        <div class="pf-stat"><b>{{ orders_count }}</b><span>{{ t('profile_orders') }}</span></div>
+        <div class="pf-stat"><b>{{ u.points or 0 }}</b><span>{{ t('profile_points') }}</span></div>
+        {% if u.role == 'technician' %}
+        <div class="pf-stat"><b>⭐ {{ '%.1f'|format(u.rating_avg or 0) }}</b><span>{{ t('profile_rating') }} ({{ u.rating_count or 0 }})</span></div>
+        {% endif %}
+        {% if member_since %}<div class="pf-stat"><b style="font-size:1.05rem">{{ member_since }}</b><span>{{ t('profile_since') }}</span></div>{% endif %}
+    </div>
+
+    <div class="pf-card fade-up d-2">
+        <div class="pf-card-head"><h5>👤 {{ t('profile_my_data') }}</h5></div>
+        <form method="POST" class="pf-body" id="pfForm">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="pf-label">👤 {{ t('auth_full_name') }}</label>
+                    <input type="text" name="name" class="form-control" value="{{ u.name }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="pf-label">✉️ {{ t('auth_email') }}</label>
+                    <input type="email" class="form-control" value="{{ u.email }}" dir="ltr" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="pf-label">📞 {{ t('auth_phone') }}</label>
+                    <input type="tel" name="phone" class="form-control" value="{{ u.phone or '' }}" placeholder="01xxxxxxxxx" dir="ltr" inputmode="tel">
+                </div>
+                <div class="col-md-6">
+                    <label class="pf-label">🗺️ {{ t('auth_governorate') }} *</label>
+                    <select name="governorate" id="governorate" class="form-select" {% if u.role != 'admin' %}required{% endif %}>
+                        <option value="">{{ t('auth_governorate') }}...</option>
+                        {% for g in governorates %}
+                        <option value="{{ g }}" {{ 'selected' if u.governorate == g else '' }}>{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <label class="pf-label">🏙️ {{ t('auth_city') }}</label>
+                    <input type="text" name="city" id="city" class="form-control" value="{{ u.city or '' }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="pf-label">📍 {{ t('auth_address') }}</label>
+                {{ picker(name='address', value=u.address or '', lat=u.lat, lng=u.lng, required=False, region='external', gov_select='#governorate', city_input='#city') }}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-lg">💾 {{ t('profile_save') }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% from "_location_picker.html" import lp_js with context %}
+{{ lp_js() }}
+{% endblock %}

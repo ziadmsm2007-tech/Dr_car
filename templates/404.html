@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ t('err404_title') }} - AutoCare{% endblock %}
+{% block content %}
+<div class="error-page fade-up">
+    <h1 class="code">4<span>0</span>4</h1>
+    <p class="lead mb-2 text-muted">{{ t('err404_desc') }}</p>
+    <a href="{{ url_for('landing') }}" class="btn btn-primary btn-lg">{{ t('back_home') }}</a>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}فاتورة #{{ order.id }} - Dr. Car{% endblock %}
+{% block extra_css %}
+<style>
+@media print { .no-print { display:none; } body { background:#fff; } }
+.invoice { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:2rem; max-width:750px; margin:0 auto; }
+.inv-head { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--talabat); padding-bottom:1rem; margin-bottom:1rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="invoice fade-up">
+    <div class="inv-head">
+        <div>
+            <h4 class="fw-bold mb-1">Dr. Car — دكتور عربيتك</h4>
+            <div class="small text-muted">فاتورة #{{ order.id }} — {{ order.created_at | int | string }}</div>
+        </div>
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" width="48" height="48" style="border-radius:10px;">
+    </div>
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <div class="small text-muted">العميل</div>
+            <div class="fw-bold">{{ customer.name }}</div>
+            <div class="small">{{ customer.email }}<br>{{ order.phone }}<br>{{ order.location }}</div>
+        </div>
+        <div class="col-6 text-end">
+            <div class="small text-muted">الفني</div>
+            <div class="fw-bold">{{ technician.name if technician else '—' }}</div>
+            <div class="small">{{ technician.email if technician else '' }}</div>
+        </div>
+    </div>
+    <table class="table">
+        <thead><tr><th>الخدمة</th><th>السعر</th><th>الخصم</th><th>الإجمالي</th></tr></thead>
+        <tbody>
+            <tr>
+                <td>{{ order.service_name }}</td>
+                <td>{{ order.service_price + (order.discount or 0) }} ج.م</td>
+                <td>{% if order.discount %}-{{ order.discount }} ج.م ({{ order.coupon_code }}){% else %}—{% endif %}</td>
+                <td class="fw-bold" style="color:var(--talabat);">{{ order.service_price }} ج.م</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="d-flex justify-content-between align-items-center mt-3 p-3" style="background:#fdeef1; border-radius:12px; border:1px solid #e8b3c0;">
+        <span>طريقة الدفع: <strong>{{ order.payment_method }}</strong> — {{ order.payment_status }}</span>
+        <span>الحالة: <strong>{{ order.status }}</strong></span>
+    </div>
+    <div class="small text-muted mt-3">📅 ميعاد الحجز: {{ order.scheduled_at or '—' }}{% if order.car_make %} • 🚗 العربية: {{ order.car_make }} {{ order.car_model or '' }} {{ order.car_year or '' }}{% endif %} • 🛡️ ضمان شامل • ⭐ قيّم الخدمة بعد الانتهاء</div>
+    <div class="text-center mt-4 no-print">
+        <button onclick="window.print()" class="btn btn-primary">🖨️ اطبع / حفظ PDF</button>
+        <a href="{{ url_for('track_order', order_id=order.id) }}" class="btn btn-outline-secondary">رجوع</a>
+    </div>
+</div>
+{% endblock %}

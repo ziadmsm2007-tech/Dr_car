@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{% if active_cat %}{{ active_cat }} - {{ t('nav_services') }}{% else %}{{ t('nav_services') }}{% endif %} - Dr. Car{% endblock %}
+{% block content %}
+<div class="page-head fade-up">
+    <h3>{% if active_cat %}🛠️ {{ active_cat }} <span class="mini-step">{{ services | length }} {{ t('services_available') }}</span>{% else %}🛠️ {{ t('services_title') }}{% endif %}</h3>
+    <p><a href="{{ url_for('customer_services') }}" class="text-white" style="font-weight:600">← {{ t('dash_view_all') }}</a></p>
+    {% if current_user and current_user.governorate %}
+    <div class="mt-2"><span class="chip" style="background:#fff; color:var(--talabat); border-color:#e8b3c0; font-size:.82rem;">📍 {{ current_user.governorate }}{% if current_user.city %} — {{ current_user.city }}{% endif %} • الأسعار لمنطقتك</span></div>
+    {% endif %}
+</div>
+
+<!-- Search box -->
+<div class="panel p-3 mb-3 fade-up" style="max-width:460px">
+    <div class="input-icon-wrap">
+        <span class="lead">🔎</span>
+        <input type="text" id="svcSearch" class="form-control" placeholder="{{ t('nav_services') }}..." oninput="filterServices(this.value)">
+    </div>
+</div>
+
+<!-- Category chips -->
+<div class="filter-chips mb-4 fade-up">
+    <a href="{{ url_for('customer_services') }}" class="chip {{ 'active' if not active_cat else '' }}">{{ t('services_title') }}</a>
+    {% for key, svs in all_categories.items() %}
+    <a href="{{ url_for('customer_services', cat=key) }}" class="chip {{ 'active' if active_cat == localize_category(key, lang) else '' }}">{{ localize_category(key, lang) }}</a>
+    {% endfor %}
+</div>
+
+<div class="row g-3" id="svcGrid">
+    {% for service in services %}
+    <div class="col-md-4 col-sm-6 svc-item fade-up">
+        <a class="s-card service-card svc-card-link d-block" href="{{ url_for('order_service', service_id=service.id) }}">
+            <div class="d-flex justify-content-between align-items-start">
+                <h5 class="svc-title fw-bold mb-1" style="color:var(--navy-800)">{{ service.name }}</h5>
+                <span class="mini-step">{{ service.id }}</span>
+            </div>
+            <p class="text-muted small mb-2">{{ service.description }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <span style="background:rgba(128,0,32,.18); border:1px solid rgba(226,169,182,.3); color:var(--burgundy-soft); padding:.3rem .6rem; border-radius:999px; font-size:.78rem; font-weight:700">🚗 اختر عربيتك لمعرفة السعر</span>
+                <span class="btn btn-navy btn-sm">{{ t('btn_details') }}</span>
+            </div>
+        </a>
+        <form method="post" action="{{ url_for('cart_add', service_id=service.id) }}" class="mt-2">
+            <button type="submit" class="tb-add-btn w-100">🛒 {{ t('cart_add') }}</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="empty-state d-none" id="svcEmpty">
+    <span class="empty-icon">🔍</span>
+    <p class="mb-0">{{ t('nav_services') }}...</p>
+</div>
+
+<script>
+function filterServices(q) {
+    q = (q || '').toLowerCase();
+    let shown = 0;
+    document.querySelectorAll('.svc-item').forEach(el => {
+        const match = el.textContent.toLowerCase().indexOf(q) !== -1;
+        el.style.display = match ? '' : 'none';
+        if (match) shown++;
+    });
+    document.getElementById('svcEmpty').classList.toggle('d-none', shown !== 0);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav_my_tasks') }} - AutoCare{% endblock %}
+{% block content %}
+<div class="page-head fade-up">
+    <h3>🧰 {{ t('nav_my_tasks') }}</h3>
+    <p>{{ tasks | length }} {{ t('order_no') }}</p>
+</div>
+
+<div class="panel fade-up">
+    <div class="panel-body">
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="tbl-modern">
+                <thead>
+                    <tr>
+                        <th>{{ t('th_id') }}</th>
+                        <th>{{ t('th_service') }}</th>
+                        <th>{{ t('th_location') }}</th>
+                        <th>{{ t('order_payment') }}</th>
+                        <th>{{ t('th_status') }}</th>
+                        <th>{{ t('th_actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>#{{ task.id }}</td>
+                        <td>
+                            <div class="fw-bold" style="color:var(--navy-800)">{{ task.service_name }}</div>
+                            {% if task.car_make %}<div><span class="st-badge" style="background:#fbe4e9;color:#800020; font-size:.75rem;">🚗 {{ task.car_make }} {{ task.car_model or '' }} {{ task.car_year or '' }}</span></div>{% endif %}
+                        </td>
+                        <td>{{ task.location }}</td>
+                        <td>{{ task.payment_method }}</td>
+                        <td><span class="st-badge st-{{ task.status|lower|replace(' ', '-') }}">{{ t('status_' ~ task.status|lower|replace(' ', '_')) }}</span></td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% if task.status == 'In Progress' %}
+                                <a href="{{ url_for('technician_complete_order', order_id=task.id) }}" class="btn btn-primary btn-sm">{{ t('btn_complete') }}</a>
+                                <a href="{{ url_for('reverse_order', order_id=task.id) }}" class="btn btn-soft btn-sm">{{ t('btn_details') }}</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><span class="empty-icon">📭</span><p class="mb-0">{{ t('tech_no_tasks') }}</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

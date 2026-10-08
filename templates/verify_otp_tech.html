@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}تأكيد التسليم - Dr. Car{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="auth-card fade-up">
+            <div class="auth-head">
+                <div class="auth-icon">🔐</div>
+                <h3 class="mb-1">كود التسليم</h3>
+                <p class="mb-0" style="color:rgba(255,255,255,.85)">اطلب من العميل كود 4 أرقام قبل الإنهاء</p>
+            </div>
+            <div class="auth-body">
+                <div class="alert alert-info small">طلب #{{ order.id }} — {{ order.service_name }}<br>العميل: {{ order.name }} — {{ order.phone }}</div>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">أدخل كود العميل (4 أرقام)</label>
+                        <input type="text" name="otp" class="form-control otp-input" maxlength="4" placeholder="••••" required>
+                    </div>
+                    <button class="btn btn-primary w-100 btn-lg">✅ تأكيد التسليم</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('technician_tasks') }}" class="btn btn-outline-secondary btn-sm">رجوع</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

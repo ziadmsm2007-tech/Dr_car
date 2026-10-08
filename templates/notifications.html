@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ t('notifications') }} - Dr. Car{% endblock %}
+{% block content %}
+<div class="page-head fade-up">
+    <h3>🔔 {{ t('notifications') }}</h3>
+    <p>{{ notifications|length }} {{ t('notifications') }}</p>
+</div>
+<div class="panel fade-up">
+    <div class="panel-body">
+        {% if notifications %}
+            {% for n in notifications %}
+            <div class="d-flex gap-3 align-items-start p-3 mb-2" style="background:{% if n.is_read %}#fff{% else %}#fdeef1{% endif %}; border:1px solid #eeeeee; border-radius:12px;">
+                <div style="width:38px; height:38px; border-radius:50%; background:var(--talabat-light); display:grid; place-items:center; flex-shrink:0;">🔔</div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold" style="color:#212121;">{{ n.title }}</div>
+                    <div class="small text-muted">{{ n.body }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state"><span class="empty-icon">🔕</span><p class="mb-0">{{ t('no_notifications') }}</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

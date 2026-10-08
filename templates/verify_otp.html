@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ t('otp_title') }} - Dr. Car{% endblock %}
+{% block content %}
+<div class="auth-wrap fade-up">
+    <div class="auth-card">
+        <div class="auth-head">
+            <div class="auth-icon">🔢</div>
+            <h3 class="mb-1">{{ t('otp_title') }}</h3>
+            <p class="mb-0" style="color:rgba(255,255,255,.8)">{{ t('otp_desc') }}</p>
+        </div>
+        <div class="auth-body">
+            <form method="POST" id="otpForm">
+                <div class="mb-3">
+                    <div class="otp-boxes">
+                        {% for i in range(6) %}
+                        <input type="text" class="form-control otp-box" maxlength="1" inputmode="numeric" pattern="\d*" autocomplete="one-time-code" {% if i == 0 %}autofocus{% endif %}>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="otp" id="otpValue">
+                </div>
+                <p class="text-center small text-muted" id="otpTimer"></p>
+                <button type="submit" class="btn btn-primary w-100 btn-lg">{{ t('otp_btn') }}</button>
+            </form>
+            <p class="text-center mt-4 mb-0 otp-resend">
+                <a href="{{ url_for('resend_otp') }}" id="resendLink" class="text-decoration-none" style="color:var(--blue-600)">{{ t('otp_resend') }}</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function(){
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('.otp-box'));
+    var hidden = document.getElementById('otpValue');
+    var form = document.getElementById('otpForm');
+
+    function syncHidden(){ hidden.value = boxes.map(function(b){ return b.value; }).join(''); }
+
+    boxes.forEach(function(box, i){
+        box.addEventListener('input', function(){
+            box.value = box.value.replace(/\D/g, '').slice(0, 1);
+            if(box.value && boxes[i + 1]) boxes[i + 1].focus();
+            syncHidden();
+        });
+        box.addEventListener('keydown', function(e){
+            if(e.key === 'Backspace' && !box.value && boxes[i - 1]){ boxes[i - 1].focus(); }
+        });
+        box.addEventListener('paste', function(e){
+            var text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+            if(!text) return;
+            e.preventDefault();
+            text.split('').slice(0, boxes.length).forEach(function(ch, idx){ if(boxes[idx]) boxes[idx].value = ch; });
+            syncHidden();
+            var next = boxes[Math.min(text.length, boxes.length - 1)];
+            if(next) next.focus();
+        });
+    });
+
+    form.addEventListener('submit', function(e){
+        syncHidden();
+        if(hidden.value.length < boxes.length){
+            e.preventDefault();
+            boxes[hidden.value.length].focus();
+        }
+    });
+
+    // عدّاد صلاحية الكود
+    var expiresIn = {{ expires_in|default(0) }};
+    var timerEl = document.getElementById('otpTimer');
+    var expiresLabel = "{{ t('otp_expires_label') }}";
+    function tickExpiry(){
+        if(expiresIn <= 0){ timerEl.textContent = "{{ t('otp_expired_label') }}"; return; }
+        var m = Math.floor(expiresIn / 60), s = expiresIn % 60;
+        timerEl.textContent = expiresLabel + ' ' + m + ':' + (s < 10 ? '0' : '') + s;
+        expiresIn--;
+        setTimeout(tickExpiry, 1000);
+    }
+    tickExpiry();
+
+    // عدّاد إعادة الإرسال
+    var resendWait = {{ resend_wait|default(0) }};
+    var resendLink = document.getElementById('resendLink');
+    var resendLabel = "{{ t('otp_resend') }}";
+    var resendWaitLabel = "{{ t('otp_resend_wait') }}";
+    function tickResend(){
+        if(resendWait <= 0){
+            resendLink.textContent = resendLabel;
+            resendLink.style.pointerEvents = 'auto';
+            resendLink.style.opacity = '1';
+            return;
+        }
+        resendLink.textContent = resendWaitLabel.replace('{s}', resendWait);
+        resendLink.style.pointerEvents = 'none';
+        resendLink.style.opacity = '.6';
+        resendWait--;
+        setTimeout(tickResend, 1000);
+    }
+    tickResend();
+})();
+</script>
+{% endblock %}

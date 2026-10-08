@@ -1,0 +1,42 @@
+{# قائمة اختيار مخصصة (custom select) — بتستبدل الـ <select> الأصلي
+   عشان شكلها يطلع ناعم ومنسجم مع الموقع بدل قائمة النظام.
+
+   الاستخدام:
+     {% from "_dropdown.html" import dropdown %}
+     {{ dropdown('carMake', 'Select make', car_makes_list) }}
+     {{ dropdown('carModel', 'Select model', [], is_empty=True) }}
+#}
+{% macro dropdown(name, id, placeholder, options=[], is_empty=False) %}
+<div class="dd" data-dd="{{ id }}">
+    <button type="button" class="dd-trigger form-select form-select-lg" id="{{ id }}Btn"
+            aria-haspopup="listbox" aria-expanded="false">
+        <span class="dd-value is-placeholder">{{ placeholder }}</span>
+        <svg class="dd-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="dd-menu" role="listbox" tabindex="-1" hidden>
+        <div class="dd-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            <input type="text" class="dd-search" placeholder="Type to filter…" aria-label="Filter">
+        </div>
+        <div class="dd-list" role="option" aria-labelledby="{{ id }}Btn">
+            {%- if not is_empty -%}
+                {%- for o in options -%}
+                    <button type="button" class="dd-item" role="option" data-value="{{ o }}" aria-selected="false">
+                        <span class="dd-item-text">{{ o }}</span>
+                        <svg class="dd-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                            <path d="m5 13 4.5 4.5L19 7"/>
+                        </svg>
+                    </button>
+                {%- endfor -%}
+            {%- endif -%}
+        </div>
+        <div class="dd-empty" hidden>No matches</div>
+    </div>
+
+    {# الـ input الحقيقي اللي بيروح مع الفورم #}
+    <input type="hidden" name="{{ name }}" id="{{ id }}" value="" required>
+</div>
+{% endmacro %}

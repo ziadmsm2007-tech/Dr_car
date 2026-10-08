@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}{{ t('checkout_title') }} - Dr. Car{% endblock %}
+{% block extra_css %}
+{% from "_location_picker.html" import lp_css with context %}
+{{ lp_css() }}
+<style>
+.co-page{max-width:900px; margin:0 auto;}
+.co-card{background:#fff; border:1px solid #eee; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.06); overflow:hidden;}
+.co-head{background:linear-gradient(135deg,var(--talabat),#f97316); color:#fff; padding:1.2rem 1.4rem;}
+.co-head h4{margin:0; font-weight:900;}
+.co-body{padding:1.4rem;}
+.co-label{display:block; font-weight:800; color:#333; font-size:.86rem; margin-bottom:.4rem;}
+.co-body .form-control,.co-body .form-select{border-radius:12px; border:1.5px solid #e2e5ea; background:#fafbfc; padding:.7rem .85rem; color:#1f232b;}
+.co-body .form-control::placeholder{color:#a8aeb8}
+.co-body .form-control:focus{border-color:var(--talabat); background:#fff; box-shadow:0 0 0 4px rgba(128,0,32,.12);}
+/* نسخة فاتحة من القائمة المخصصة عشان تبان على الكارت الأبيض */
+.co-body .dd{background:#fafbfc; border-color:#e2e5ea}
+.co-body .dd:focus-within{border-color:var(--talabat); box-shadow:0 0 0 4px rgba(128,0,32,.12)}
+.co-body .dd-trigger{color:#1f232b!important}
+.co-body .dd-value{color:#1f232b}
+.co-body .dd-caret{color:#9aa0ab}
+.co-body .dd-menu{background:#fff; border-color:rgba(0,0,0,.10); box-shadow:0 18px 45px rgba(0,0,0,.18)}
+.co-body .dd-item{color:#1f232b}
+.co-body .dd-item:hover{background:#f2f3f5; color:#000}
+.co-body .dd-item[aria-selected="true"]{background:rgba(128,0,32,.10); color:#800020}
+.co-body .dd-tick{color:#800020}
+.co-body .dd-search{background:#f5f6f8; border-color:#e2e5ea; color:#1f232b}
+.co-body .dd-search::placeholder{color:#9aa0ab}
+.co-body .dd-search-wrap{border-bottom-color:#eef0f3}
+.co-body .dd-search-wrap svg{color:#9aa0ab}
+.co-body .dd-empty{color:#8b909a}
+.co-summary{background:#fffdf9; border:1px solid #f2e6d5; border-radius:18px;}
+.co-line{display:flex; justify-content:space-between; gap:.6rem; padding:.5rem 0; border-bottom:1px dashed #f0e6d6; color:#42474f; font-weight:700;}
+.co-line:last-child{border-bottom:none;}
+.co-line .q{color:#9aa0ab; font-weight:800;}
+.co-price{white-space:nowrap}
+.co-price.na{color:#b8bdc6; font-weight:700}
+.co-note{background:#fff7ed; border:1px dashed #f5c78a; color:#9a5b13; border-radius:12px; padding:.6rem .8rem; font-size:.84rem; font-weight:700; margin-top:.8rem; display:flex; gap:.5rem; align-items:center}
+.co-total{display:flex; justify-content:space-between; font-size:1.25rem; font-weight:900; color:#212121; padding-top:.7rem; border-top:1.5px solid #eadfce; margin-top:.4rem;}
+</style>
+{% endblock %}
+{% block content %}
+{% from "_dropdown.html" import dropdown %}
+{% from "_location_picker.html" import picker with context %}
+<div class="co-page">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="co-card fade-up">
+                <div class="co-head">
+                    <h4>🚗 {{ t('checkout_title') }}</h4>
+                    <div style="opacity:.9; font-size:.9rem;">{{ t('checkout_sub') }}</div>
+                </div>
+                <form method="POST" id="coForm" class="co-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="co-label">👤 {{ t('order_full_name') }}</label>
+                            <input type="text" name="name" class="form-control" value="{{ current_user.name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="co-label">📞 {{ t('order_phone') }}</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="01xxxxxxxxx" value="{{ saved_phone }}" dir="ltr" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="co-label">📍 {{ t('order_address_lbl') }}</label>
+                        {{ picker(name='location', value=(address or city or ''), lat=saved_lat, lng=saved_lng, region='hidden') }}
+                        <input type="hidden" name="scheduled_at" value="">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="co-label">🚙 {{ t('car_section') }}</label>
+                        <div class="row g-2">
+                            <div class="col-6">{{ dropdown('car_make', 'carMake', t('car_make_pick'), car_makes_list) }}</div>
+                            <div class="col-6">{{ dropdown('car_model', 'carModel', t('car_model_pick'), [], is_empty=True) }}</div>
+                        </div>
+                        <input type="hidden" name="car_year" value="2020">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">{{ t('checkout_confirm') }} ✨</button>
+                    <p class="text-center small text-muted mt-2 mb-0">{{ t('checkout_review_note') }}</p>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="co-summary p-3 p-md-4 fade-up d-1">
+                <h5 class="fw-bold mb-3" style="color:#212121;">🧾 {{ t('cart_title') }}</h5>
+                {% for i in items %}
+                <div class="co-line">
+                    <span><span class="q">×{{ i.qty }}</span> {{ i.name }}</span>
+                    <span class="co-price na" data-sid="{{ i.service_id }}">—</span>
+                </div>
+                {% endfor %}
+                <div class="co-note" id="coNote">🚗 {{ t('price_pick_car') }}</div>
+                <div class="co-total" id="coTotal" style="display:none;">
+                    <span>{{ t('cart_total') }}</span>
+                    <span style="color:var(--talabat);" id="coTotalVal">—</span>
+                </div>
+                <p class="small text-muted mt-3 mb-0">{{ t('cart_pay_note') }}</p>
+                <a href="{{ url_for('cart_view') }}" class="btn btn-outline-secondary w-100 mt-3">← {{ t('cart_title') }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% from "_location_picker.html" import lp_js with context %}
+{{ lp_js() }}
+<script>
+(function(){
+  var CAR_DATA={{ car_makes|tojson }};
+  var CUR="{{ t('currency') }}";
+  var ddMake = document.querySelector('[data-dd="carMake"]');
+  var ddModel = document.querySelector('[data-dd="carModel"]');
+  var carModelPick="{{ t('car_model_pick') }}";
+  var form=document.getElementById('coForm');
+  var note=document.getElementById('coNote'), totalRow=document.getElementById('coTotal'), totalVal=document.getElementById('coTotalVal');
+  if(window.DD){ window.DD.init(); }
+
+  function hidePrices(){
+    document.querySelectorAll('.co-price').forEach(function(el){ el.textContent='—'; el.classList.add('na'); });
+    totalRow.style.display='none'; note.style.display='flex';
+  }
+  var reqId=0;
+  function quote(){
+    var make=ddMake?window.DD.get(ddMake):'', model=ddModel?window.DD.get(ddModel):'';
+    if(!make||!model){ hidePrices(); return; }
+    var my=++reqId;
+    fetch('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      car_make:make, car_model:model,
+      location:form.elements['location'].value,
+      governorate:(form.elements['governorate']||{}).value||'',
+      city:(form.elements['city']||{}).value||''
+    })}).then(function(r){return r.json();}).then(function(d){
+      if(my!==reqId) return;
+      if(!d||!d.ok){ hidePrices(); return; }
+      d.lines.forEach(function(l){
+        var el=document.querySelector('.co-price[data-sid="'+l.service_id+'"]');
+        if(el){ el.textContent=CUR+' '+l.line_total; el.classList.remove('na'); }
+      });
+      totalVal.textContent=CUR+' '+d.total;
+      totalRow.style.display='flex'; note.style.display='none';
+    }).catch(function(){ hidePrices(); });
+  }
+  var quoteSoon=(function(){var t;return function(){clearTimeout(t);t=setTimeout(quote,350);};})();
+
+  if(ddMake){
+    ddMake.addEventListener('dd:change',function(e){
+      if(window.DD && ddModel){
+        window.DD.setOptions(ddModel, CAR_DATA[e.detail.value]||[], carModelPick);
+        window.DD.setValue(ddModel,'');
+      }
+      hidePrices();
+    });
+  }
+  if(ddModel){ ddModel.addEventListener('dd:change',quote); }
+  document.addEventListener('lp:change',quoteSoon);
+  if(form){
+    form.elements['location'].addEventListener('input',quoteSoon);
+    form.addEventListener('submit',function(e){
+      if(ddMake&&ddModel){
+        if(!window.DD.get(ddMake)){ window.DD.open(ddMake); e.preventDefault(); return; }
+        if(!window.DD.get(ddModel)){ window.DD.open(ddModel); e.preventDefault(); return; }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

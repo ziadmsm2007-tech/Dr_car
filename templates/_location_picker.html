@@ -1,0 +1,46 @@
+{# اختيار الموقع (بحث + GPS + خريطة).
+   الاستخدام:
+     {% from "_location_picker.html" import picker, lp_css, lp_js with context %}
+     في extra_css:  {{ lp_css() }}      وفي extra_js:  {{ lp_js() }}
+     وفي الفورم:    {{ picker(name='location', value=..., lat=..., lng=...) }}
+   region='hidden'   → بيضيف حقول governorate/city مخفية (للطلبات)
+   region='external' → بيملا قايمة المحافظة وحقل المدينة الظاهرين في الصفحة (gov_select / city_input) #}
+{% macro lp_css() %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/location_picker.css') }}">
+{% endmacro %}
+
+{% macro lp_js() %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/location_picker.js') }}"></script>
+{% endmacro %}
+
+{% macro picker(name='location', value='', lat='', lng='', required=True, region='hidden', gov_select='', city_input='') %}
+<div class="lp" id="lp"
+     data-gov-select="{{ gov_select }}" data-city-input="{{ city_input }}"
+     data-msg-insecure="{{ t('lp_gps_insecure') }}"
+     data-msg-denied="{{ t('lp_gps_denied') }}"
+     data-msg-loading="{{ t('geo_loading') }}"
+     data-msg-no-results="{{ t('lp_no_results') }}"
+     data-msg-fail="{{ t('lp_search_failed') }}"
+     data-msg-hint="{{ t('lp_map_hint') }}"
+     data-msg-picked="{{ t('lp_picked') }}"
+     data-msg-no-map="{{ t('lp_no_map') }}">
+    <div class="lp-search">
+        <span class="lp-ico">🔎</span>
+        <input type="text" id="lpSearch" class="lp-input" name="{{ name }}" value="{{ value or '' }}"
+               placeholder="{{ t('order_search_place') }}" autocomplete="off" {% if required %}required{% endif %}>
+        <button type="button" id="lpClear" class="lp-clear" aria-label="clear" hidden>✕</button>
+        <ul id="lpResults" class="lp-results" role="listbox" hidden></ul>
+    </div>
+    <button type="button" id="lpGps" class="lp-gps">📍 {{ t('lp_use_gps') }}</button>
+    <div id="lpMap" class="lp-map"></div>
+    <div id="lpHint" class="lp-hint">{{ t('lp_map_hint') }}</div>
+    <input type="hidden" name="lat" id="lpLat" value="{{ lat if lat is not none else '' }}">
+    <input type="hidden" name="lng" id="lpLng" value="{{ lng if lng is not none else '' }}">
+    {% if region == 'hidden' %}
+    <input type="hidden" name="governorate" id="lpGov" value="">
+    <input type="hidden" name="city" id="lpCity" value="">
+    {% endif %}
+</div>
+{% endmacro %}
