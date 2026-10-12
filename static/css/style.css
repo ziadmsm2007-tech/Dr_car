@@ -383,6 +383,12 @@ html[dir="ltr"] .pane-input .form-select{background-position:right .85rem center
 .pane-alt-btn:hover{background:#f7f8fa; border-color:#cfd4da; transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.10)}
 .pane-alt-btn.is-off{opacity:.5; cursor:not-allowed; filter:grayscale(.7)}
 .pane-alt-btn.is-off:hover{transform:none; box-shadow:none; background:#fff; border-color:#e3e6ea}
+/* زر جوجل العريض فوق الفورم (باين من غير سكرول) */
+.pane-alt-top{margin:0 0 1.4rem}
+.pane-alt-btn-wide{width:100%; height:auto; padding:.72rem 1rem; gap:.6rem;
+  font-weight:800; font-size:.92rem; color:#3c4043; text-decoration:none!important}
+.pane-alt-btn-wide svg{width:22px; height:22px; flex-shrink:0}
+.pane-alt-btn-wide:hover{color:#3c4043}
 
 /* حقل العنوان في التسجيل */
 .pane-loc-btn{
@@ -729,6 +735,7 @@ html.js .rv-js.in{opacity:1; transform:none}
 .tb-add-btn{
   border:none; background:#fdeef1; border:1.5px solid #e8b3c0; color:#800020; font-weight:900;
   border-radius:12px; padding:.45rem .8rem; cursor:pointer; transition:.18s; white-space:nowrap;
+  display:inline-flex; align-items:center; justify-content:center; gap:.45rem; text-align:center;
 }
 .tb-add-btn:hover{background:var(--talabat); color:#fff; border-color:var(--talabat)}
 .tb-section-h{display:flex; align-items:center; justify-content:space-between; margin:1.6rem 0 .2rem}
@@ -768,5 +775,10 @@ img{max-width:100%}
   .otp-boxes{gap:6px}
   .hero{padding:1.8rem 1rem}
   .co-body{padding:.9rem}
+}
+@media (max-width:575.98px){
+  /* الفوتر على الموبايل: كل عمود بسطر وروابطه قائمة نضيفة بدل الكلام اللازق */
+  .app-footer .row>.col-6{flex:0 0 100%; max-width:100%}
+  .app-footer .foot-link{display:block; padding:.28rem 0}
 }
 

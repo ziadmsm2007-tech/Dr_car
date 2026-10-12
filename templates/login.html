@@ -3,8 +3,11 @@
 {% block content %}
 {% from "_spot.html" import stage with context %}
 {% set active = 'login' %}
-{% call stage() %}
+{% call stage(active) %}
             <p class="pane-top">{{ t('auth_no_account') }} <a href="{{ url_for('register') }}">{{ t('auth_register_btn') }}</a></p>
+
+            {% set oauth_top = true %}
+            {% include "_oauth_buttons.html" %}
 
             <form method="POST">
                 <div class="pane-field">
@@ -46,8 +49,6 @@
 
                 <button type="submit" class="pane-submit">{{ t('auth_login_btn') }}</button>
             </form>
-
-            {% include "_oauth_buttons.html" %}
 {% endcall %}
 {% endblock %}
 {% block extra_js %}
