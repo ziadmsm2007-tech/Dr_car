@@ -194,6 +194,19 @@ def register_routes(app):
         return redirect(url_for("landing"))
 
     # -----------------------------------------------------------------
+    # Service worker على الجذر (scope: /) — شرط أساسي للتثبيت كتطبيق.
+    # محتواه بيخزّن الملفات الثابتة بس، وكل الصفحات بتعدي للشبكة عادي.
+    # -----------------------------------------------------------------
+    @app.route("/sw.js")
+    def service_worker():
+        resp = send_from_directory(
+            os.path.join(app.static_folder), "sw.js",
+            mimetype="application/javascript",
+        )
+        resp.headers["Service-Worker-Allowed"] = "/"
+        return resp
+
+    # -----------------------------------------------------------------
     # Public pages
     # -----------------------------------------------------------------
     @app.route("/")
