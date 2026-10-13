@@ -51,8 +51,13 @@ def is_configured():
     )
 
 
-def _post(path, payload, auth_token=None):
-    """POST واحد لكل نداءات Paymob — timeout قصير وخطأ موحّد."""
+def _post(path, payload, auth_token=None, step="paymob"):
+    """POST واحد لكل نداءات Paymob — timeout قصير وخطأ موحّد.
+
+    سبب الرفض التفصيلي (الكود + أول الرد) بيتسجل في error log عشان
+    التشخيص، من غير ما يتكشف أي سر للمستخدم.
+    """
+    import logging
     try:
         headers = {"Content-Type": "application/json"}
         if auth_token:
@@ -61,6 +66,13 @@ def _post(path, payload, auth_token=None):
     except Exception as e:
         raise PaymobError("تعذّر الاتصال ببوابة الدفع، حاول تاني.") from e
     if resp.status_code >= 400:
+        try:
+            body = resp.text[:300]
+        except Exception:
+            body = ""
+        logging.getLogger("paymob").warning(
+            "Paymob %s failed: HTTP %s body=%s", step, resp.status_code, body
+        )
         raise PaymobError("بوابة الدفع رفضت الطلب (راجع مفاتيح Paymob).")
     try:
         return resp.json()
@@ -106,7 +118,7 @@ def create_payment_link(order, user):
     if amount_cents <= 0:
         raise PaymobError("سعر الطلب غير صالح للدفع الأونلاين.")
 
-    auth = _post("/auth/tokens", {"api_key": Config.PAYMOB_API_KEY})
+    auth = _post("/auth/tokens", {"api_key": Config.PAYMOB_API_KEY}, step="auth")
     auth_token = auth.get("token")
     if not auth_token:
         raise PaymobError("بوابة الدفع رفضت المفتاح (راجع PAYMOB_API_KEY).")
@@ -124,7 +136,7 @@ def create_payment_link(order, user):
             "description": service_name,
             "quantity": "1",
         }],
-    }, auth_token=auth_token)
+    }, auth_token=auth_token, step="order")
     paymob_order_id = reg.get("id")
     if not paymob_order_id:
         raise PaymobError("تعذّر إنشاء طلب الدفع، حاول تاني.")
@@ -137,7 +149,7 @@ def create_payment_link(order, user):
         "billing_data": _billing_data(order, user),
         "currency": "EGP",
         "integration_id": int(Config.PAYMOB_INTEGRATION_ID),
-    }, auth_token=auth_token)
+    }, auth_token=auth_token, step="payment_key")
     payment_token = key.get("token")
     if not payment_token:
         raise PaymobError("تعذّر بدء الدفع، حاول تاني.")
