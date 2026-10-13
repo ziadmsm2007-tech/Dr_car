@@ -186,6 +186,24 @@ def mark_payout_done(order_id):
         conn.execute("UPDATE orders SET payout_status = 'Paid' WHERE id = ?", (order_id,))
 
 
+def set_paymob_order(order_id, paymob_order_id):
+    """يحفظ رقم طلب Paymob على طلبنا عشان نطابقه في الـ callback."""
+    with get_db() as conn:
+        conn.execute("UPDATE orders SET paymob_order_id = ? WHERE id = ?", (paymob_order_id, order_id))
+
+
+def set_paymob_txn(order_id, txn_id):
+    """يحفظ رقم عملية الدفع الناجحة للمراجعة."""
+    with get_db() as conn:
+        conn.execute("UPDATE orders SET paymob_txn_id = ? WHERE id = ?", (txn_id, order_id))
+
+
+def get_order_by_paymob(paymob_order_id):
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM orders WHERE paymob_order_id = ?", (paymob_order_id,)).fetchone()
+        return dict(row) if row else None
+
+
 def get_pending_payouts(technician_id=None):
     with get_db() as conn:
         if technician_id:

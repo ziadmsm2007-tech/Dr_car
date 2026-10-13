@@ -137,6 +137,10 @@
                         </div>
                         <button type="submit" class="btn btn-primary w-100 btn-lg">💳 {{ t('pay_now') }} — {{ t('currency') }} {{ order.service_price }}</button>
                     </form>
+                    <form method="POST" action="{{ url_for('pay_online', order_id=order.id) }}" class="mt-2">
+                        <button type="submit" class="btn w-100 btn-lg" style="background:#fff; border:1.5px solid var(--talabat); color:var(--talabat); font-weight:900; border-radius:12px;">{{ t('pay_online_btn') }} — {{ t('currency') }} {{ order.service_price }}</button>
+                        <div class="text-center small text-muted mt-1">{{ t('pay_online_hint') }}</div>
+                    </form>
                     <div class="text-center mt-3">
                         <a href="{{ url_for('invoice', order_id=order.id) }}" class="btn btn-outline-secondary btn-sm">📄 عرض الفاتورة</a>
                     </div>

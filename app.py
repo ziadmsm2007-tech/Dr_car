@@ -24,6 +24,7 @@ from database import init_db
 import models
 import cart
 import geo
+import paymob
 import math
 
 EGYPT_GOVERNORATES = [
@@ -1073,6 +1074,75 @@ def register_routes(app):
         models.add_points(order["customer_id"], 20)
         flash("flash_paid_completed")
         return redirect(url_for("track_order", order_id=order_id))
+
+    @app.route("/pay_online/<int:order_id>", methods=["POST"])
+    @role_required("client")
+    def pay_online(order_id):
+        """يبدأ دفع أونلاين بالكارت عبر Paymob ويحوّل العميل لصفحة الدفع."""
+        order = models.get_order_by_id(order_id)
+        if not order or order["customer_id"] != session["user_id"]:
+            flash("flash_no_access")
+            return redirect(url_for("my_orders"))
+        if order["status"] != "Awaiting Payment" or order.get("payment_status") == "Paid":
+            flash("flash_not_ready_to_pay")
+            return redirect(url_for("track_order", order_id=order_id))
+        if not paymob.is_configured():
+            flash("flash_paymob_off")
+            return redirect(url_for("track_order", order_id=order_id))
+        try:
+            user = get_current_user() or {}
+            link, paymob_order_id = paymob.create_payment_link(order, user)
+            models.set_paymob_order(order_id, paymob_order_id)
+        except paymob.PaymobError as e:
+            app.logger.warning("Paymob start failed for order %s: %s", order_id, e)
+            flash("flash_pay_online_failed")
+            return redirect(url_for("track_order", order_id=order_id))
+        return redirect(link)
+
+    @app.route("/paymob/callback")
+    @login_required
+    def paymob_callback():
+        """Paymob يرجّع العميل هنا بعد الدفع — لا نعتمد أي callback
+        إلا بتوقيع HMAC سليم ومبلغ مطابق لطلب يملكه نفس المستخدم."""
+        try:
+            info = paymob.verify_callback(request.args.to_dict())
+        except paymob.PaymobError as e:
+            app.logger.warning("Paymob callback rejected: %s", e)
+            flash("flash_pay_online_failed")
+            return redirect(url_for("my_orders"))
+
+        order = None
+        if info["local_id"]:
+            order = models.get_order_by_id(info["local_id"])
+        if not order and info["paymob_order_id"]:
+            order = models.get_order_by_paymob(info["paymob_order_id"])
+        if not order or order["customer_id"] != session["user_id"]:
+            flash("flash_no_access")
+            return redirect(url_for("my_orders"))
+
+        expected_cents = int(round(float(order["service_price"] or 0) * 100))
+        if info["amount_cents"] != expected_cents:
+            app.logger.warning(
+                "Paymob amount mismatch order %s: got %s expected %s",
+                order["id"], info["amount_cents"], expected_cents,
+            )
+            flash("flash_pay_online_failed")
+            return redirect(url_for("track_order", order_id=order["id"]))
+
+        if order.get("payment_status") == "Paid":
+            flash("flash_already_paid")
+            return redirect(url_for("track_order", order_id=order["id"]))
+
+        models.set_paymob_txn(order["id"], info["txn_id"])
+        models.mark_order_paid(order["id"], "Card-Online")
+        if order.get("technician_id"):
+            models.add_notification(
+                order["technician_id"], "تم الدفع أونلاين ✅",
+                f"العميل دفع {order['service_price']} ج.م بالكارت لطلب #{order['id']}",
+            )
+        models.add_points(order["customer_id"], 20)
+        flash("flash_paid_online")
+        return redirect(url_for("track_order", order_id=order["id"]))
 
     @app.route("/rate_order/<int:order_id>", methods=["POST"])
     @role_required("client")

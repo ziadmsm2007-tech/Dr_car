@@ -142,6 +142,9 @@ def init_db():
             ("otp_code", "ALTER TABLE orders ADD COLUMN otp_code TEXT"),
             ("tech_lat", "ALTER TABLE orders ADD COLUMN tech_lat REAL"),
             ("tech_lng", "ALTER TABLE orders ADD COLUMN tech_lng REAL"),
+            # الدفع أونلاين (Paymob): رقم طلب Paymob ورقم العملية الناجحة
+            ("paymob_order_id", "ALTER TABLE orders ADD COLUMN paymob_order_id INTEGER"),
+            ("paymob_txn_id", "ALTER TABLE orders ADD COLUMN paymob_txn_id TEXT"),
         ]:
             try:
                 cols = [r[1] for r in c.execute("PRAGMA table_info(orders)").fetchall()]

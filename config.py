@@ -99,6 +99,23 @@ class Config:
     OWNER_INSTAPAY = os.environ.get("OWNER_INSTAPAY", "ziadmsm2007@instapay")
     OWNER_BANK_ACCOUNT = os.environ.get("OWNER_BANK_ACCOUNT", "")
 
+    # ---------------------------------------------------------------
+    # الدفع أونلاين بالكارت (Paymob - مصر)
+    # 1) اعمل حساب على https://accept.paymob.com (تجريبي مجاناً)
+    # 2) Developers → Payment Integrations → انسخ الـ Integration ID
+    #    بتاع الكارت، ومن iFrame انسخ الـ iFrame ID
+    # 3) Settings → Account Info → الـ API Key، ومن Developers →
+    #    HMAC Settings انسخ الـ HMAC Secret
+    # 4) في لوحة Paymob حط Transaction Response Callback:
+    #        https://your-domain.com/paymob/callback
+    # من غير المفاتيح دي، زرار "ادفع أونلاين" بيدي رسالة واضحة
+    # بدل ما يوقع الموقع (نفس فكرة أزرار جوجل).
+    # ---------------------------------------------------------------
+    PAYMOB_API_KEY = os.environ.get("PAYMOB_API_KEY", "")
+    PAYMOB_INTEGRATION_ID = os.environ.get("PAYMOB_INTEGRATION_ID", "")
+    PAYMOB_IFRAME_ID = os.environ.get("PAYMOB_IFRAME_ID", "")
+    PAYMOB_HMAC_SECRET = os.environ.get("PAYMOB_HMAC_SECRET", "")
+
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "photos")
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}

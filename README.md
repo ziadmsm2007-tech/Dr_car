@@ -121,6 +121,31 @@ pip install Authlib requests
 - في الإنتاج (مش على جهازك) جوجل وفيسبوك بيطلبوا الموقع يكون شغال بـ **HTTPS**
   (بيسمحوا بـ HTTP بس لـ localhost/127.0.0.1 وقت التجربة).
 
+## تفعيل الدفع أونلاين بالكارت (Paymob)
+
+زرار "💳 ادفع أونلاين بالكارت" بيظهر في صفحة تتبع الطلب لما يكون
+بانتظار الدفع. من غير المفاتيح بيدّي رسالة "لسه مش مفعّل" بدل ما يبوّظ
+الموقع. للتفعيل (حساب تجريبي مجاناً على https://accept.paymob.com):
+
+1. Developers → Payment Integrations → انسخ **Integration ID** بتاع الكارت.
+2. انسخ **iFrame ID** من صفحة الـ iFrame.
+3. Settings → Account Info → انسخ **API Key**.
+4. Developers → HMAC Settings → انسخ **HMAC Secret**.
+5. في لوحة Paymob حط **Transaction Response Callback**:
+   `https://your-domain.com/paymob/callback`
+6. حطهم في البيئة (أو ملف WSGI على الاستضافة):
+```
+PAYMOB_API_KEY=...
+PAYMOB_INTEGRATION_ID=...
+PAYMOB_IFRAME_ID=...
+PAYMOB_HMAC_SECRET=...
+```
+7. جرّب بكارت الاختبار (Paymob test cards) قبل التفعيل الحقيقي —
+   التفعيل الحقيقي بيحتاج سجل تجاري وبطاقة ضريبية.
+
+أمان: الـ callback بيتحقق من توقيع HMAC + مطابقة المبلغ ورقم الطلب
+قبل ما يعتبر أي عملية مدفوعة — أي callback مزيّف مرفوض.
+
 ## نقاط تحتاج انتباه قبل النشر الفعلي
 
 1. **لا تشغّل بـ `debug=True` في الإنتاج**.
